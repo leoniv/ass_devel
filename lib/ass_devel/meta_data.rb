@@ -22,12 +22,15 @@ module AssDevel
         end
       end
 
-      # Mixin properties: +Name+, +Synonym+, +Comment+
-      module NamedObject
-        def self.class_properties
+      module HaveClassProperties
+        def class_properties
           @class_properties ||= {}
         end
+      end
 
+      # Mixin provides properties: +Name+, +Synonym+, +Comment+
+      module NamedObject
+        extend HaveClassProperties
         PROPS = {Имя: :Name,
                  Комментарий: :Comment,
                  Синоним: :Synonym}
@@ -45,7 +48,9 @@ module AssDevel
         end
       end
 
+      # Mixin provides properties for CommonModule
       module CommonModule
+        extend HaveClassProperties
         PROPS = {
           ВнешнееСоединение: :ExternalConnection,
           ВызовСервера: :ServerCall,
