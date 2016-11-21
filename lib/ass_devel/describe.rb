@@ -3,7 +3,7 @@ module AssDevel
     # @api private
     module Mixins
       # @api private
-      module MetaDataContainer
+      module MdDescriber
         def md_object
           @md_object || fail("Not initialized md container #{self.name}")
         end
@@ -41,14 +41,14 @@ module AssDevel
 
     module Application
       module Configuration
-        include Mixins::MetaDataContainer
+        include Mixins::MdDescriber
         def new_md_object(name)
           MetaData::MdObjects::Configuration.new(name)
         end
       end
 
       module Block
-        include Mixins::MetaDataContainer
+        include Mixins::MdDescriber
         def new_md_object(name)
           MetaData::MdObjects::Subsystem.new(name, self::PREFIX)
         end
@@ -57,14 +57,14 @@ module AssDevel
 
     module External
       module DataProcessor
-        include Mixins::MetaDataContainer
+        include Mixins::MdDescriber
         def new_md_object(name)
           MetaData::MdObjects::Externals::DataProcessor.new(name)
         end
       end
 
       module Report
-        include Mixins::MetaDataContainer
+        include Mixins::MdDescriber
         def new_md_object(name)
           MetaData::MdObjects::Externals::Report.new(name)
         end
