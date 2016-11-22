@@ -346,7 +346,9 @@ module AssDevel
       end
     end
 
+    require 'ass_devel/meta_data/const'
     require 'ass_devel/meta_data/md_objects'
     require 'ass_devel/meta_data/app_parts'
+
   end
 end
