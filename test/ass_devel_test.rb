@@ -1,11 +1,9 @@
 require 'test_helper'
 
-class AssDevelTest < Minitest::Test
-  def test_that_it_has_a_version_number
-    refute_nil ::AssDevel::VERSION
-  end
-
-  def test_it_does_something_useful
-    assert false
+module AssDevelTest
+  describe AssDevel do
+    it 'Have VERSION' do
+      refute_nil AssDevel::VERSION
+    end
   end
 end
