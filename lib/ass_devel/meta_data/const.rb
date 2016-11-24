@@ -68,6 +68,8 @@ module AssDevel
         add :SessionModule, :МодульСеанса
         add :ManagedApplicationModule, :МодульУправляемогоПриложения
         add :Module, :Модуль
+        add :ManagerModule, :МодульМенеджера
+        add :ObjectModule, :МодульОбъекта
       end
 
       module Rights
@@ -80,6 +82,13 @@ module AssDevel
           Right
         end
 
+        add :Read, :Чтение
+        add :Insert, :Добавление
+        add :Update, :Изменение
+        add :Delete, :Удаление
+        add :Posting, :Проведение
+        add :UndoPosting, :ОтменаПроведения
+        add :View, :Просмотр
         add :InteractiveInsert, :ИнтерактивноеДобавление
         add :Edit, :Редактирование
         add :InteractiveSetDeletionMark, :ИнтерактивнаяПометкаУдаления
@@ -152,27 +161,43 @@ module AssDevel
             def self.en_ru(en, ru)
               RuEnNamed.new(en, ru, self)
             end
+
+            class Enum < Abstract
+              class Item < RuEnNamed; end
+              def self.klass
+                Item
+              end
+              extend HaveContent
+
+              def content
+                self.class.content
+              end
+
+              def valid?(string)
+                !self.class.get(string).nil?
+              end
+            end
           end
-          class Enum < Abstract
-            class Item < RuEnNamed; end
-            def self.klass
-              Item
-            end
-            extend HaveContent
 
-            def content
-              self.class.content
-            end
-
-            def valid?(string)
-              !self.class.get(string).nil?
+          class String < Abstract
+            def valid?(s)
+              s.is_a? String
             end
           end
 
-          class String < Abstract; end
-          class Boolean < Abstract; end
-          class Number < Abstract; end
-          class ReturnValuesReuse < Enum
+          class Boolean < Abstract
+            def valid?(bool)
+              bool.is_a?(TrueClass) || bool.is_a?(FalseClass)
+            end
+          end
+
+          class Number < Abstract
+            def valid?(number)
+              number.is_a?(Fixnum) || number.is_a?(Float)
+            end
+          end
+
+          class ReturnValuesReuse < Abstract::Enum
             add :DontUse, :НеИспользовать
             add :DuringRequest, :НаВремяВызова
             add :DuringSession, :НаВремяСеанса
@@ -229,6 +254,10 @@ module AssDevel
           :ReturnValuesReuse
         add :Privileged, :Привилегированный, :Boolean
         add :Server, :Сервер, :Boolean
+
+        add :NumberLength, :ДлинаНомера, :Number
+        add :CheckUnique, :КонтрольУникальности, :Boolean
+        add :Explanation, :Пояснение, :String
       end
 
       module MdCollections
@@ -298,7 +327,12 @@ module AssDevel
         add :BusinessProcesses, :БизнесПроцессы, :BusinessProcesse
         add :Tasks, :Задачи, :Task
 
+
         add :Forms, :Формы, :Form
+        add :Attributes, :Реквизиты, :Attribute
+        add :TabularSections, :ТабличныеЧасти, :TabularSection
+        add :Templates, :Макеты, :Template
+        add :Commands, :Команды, :Command
       end
 
       module MdClasses
@@ -462,6 +496,42 @@ module AssDevel
                               ReturnValuesReuse
                               Privileged
                               Server
+          }
+        end
+
+        add :BusinessProcess, :БизнесПроцесс do |klass|
+          klass.rights = %w{
+                    Чтение
+                    Добавление
+                    Изменение
+                    Удаление
+                    Просмотр
+                    ИнтерактивноеДобавление
+                    Редактирование
+                    ИнтерактивноеУдаление
+                    ИнтерактивнаяПометкаУдаления
+                    ИнтерактивноеСнятиеПометкиУдаления
+                    ИнтерактивноеУдалениеПомеченных
+                    ВводПоСтроке
+                    ИнтерактивнаяАктивация
+                    Старт
+                    ИнтерактивныйСтарт
+            }
+
+          klass.modules = %w{ManagerModule ObjectModule}
+
+          klass.collections = %w{
+                  TabularSections
+                  Forms
+                  Templates
+                  Commands
+                  Attributes
+          }
+
+          klass.properties = %w{
+                  NumberLength
+                  CheckUnique
+                  Explanation
           }
         end
       end
