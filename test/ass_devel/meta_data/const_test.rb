@@ -51,8 +51,8 @@ module AssDevelTest
 
       desc.content.each do |coll|
         it "#{coll.en} #md_class.is_a? MdClass" do
-          skip
-          coll.must_be_instance_of AssDevel::MetaData::Const::MdClasses::MdClass
+          coll.md_class
+            .must_be_instance_of AssDevel::MetaData::Const::MdClasses::MdClass
         end
       end
     end
@@ -82,6 +82,45 @@ module AssDevelTest
             eval "AssDevel::MetaData::Const::PropTypes::Classes::#{type.en}"
         end
       end
+
+      describe AssDevel::MetaData::Const::PropTypes::String do
+        it "#valid?" do
+          self.class.desc.valid?('Good value').must_equal true
+          self.class.desc.valid?(:BadValue).must_equal false
+        end
+
+      end
+
+      describe AssDevel::MetaData::Const::PropTypes::Boolean do
+        it '#valid?' do
+          self.class.desc.valid?(true).must_equal true
+          self.class.desc.valid?(false).must_equal true
+          self.class.desc.valid?(:BadValue).must_equal false
+        end
+      end
+
+      describe AssDevel::MetaData::Const::PropTypes::Number do
+        it '#valid?' do
+          self.class.desc.valid?(0).must_equal true
+          self.class.desc.valid?(0.1).must_equal true
+          self.class.desc.valid?(:BadValue).must_equal false
+        end
+      end
+
+      describe AssDevel::MetaData::Const::PropTypes::ReturnValuesReuse do
+        def valid_values
+          %w{DontUse НеИспользовать
+          DuringRequest НаВремяВызова
+          DuringSession НаВремяСеанса}
+        end
+
+        it '#valid?' do
+          valid_values.each do |valid|
+            self.class.desc.valid?(valid).must_equal true
+          end
+          self.class.desc.valid?(:BadValue).must_equal false
+        end
+      end
     end
 
     describe AssDevel::MetaData::Const::MdClasses do
@@ -90,5 +129,10 @@ module AssDevelTest
 
     end
 
+    describe AssDevel::MetaData::Const::MdProperties do
+      it 'FIXME' do
+        fail 'FIXME'
+      end
+    end
   end
 end
