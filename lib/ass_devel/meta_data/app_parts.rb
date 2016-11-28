@@ -297,7 +297,7 @@ module AssDevel
           fail 'FIXME'
         end
 
-        'TODO:'
+        # TODO:
         def IncludeInCommandInterface
           true
         end

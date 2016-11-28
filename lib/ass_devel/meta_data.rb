@@ -109,11 +109,11 @@ module AssDevel
     module Abstract
       module DSL
         def good_owners(*klasses)
-          good_owners_set *klasses
+          good_owners_set(*klasses)
         end
 
         def good_children(*klasses)
-          good_children_set *klasses
+          good_children_set(*klasses)
         end
       end
 

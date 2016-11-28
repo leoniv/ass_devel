@@ -2,10 +2,8 @@ require 'test_helper'
 
 module AssDevelTest
   module Const
-
     describe AssDevel::MetaData::Const::RuEnNamed do
       inst = desc.new(:En, :Ru, :Module)
-      klass = desc
 
       it "Instace method #const_name" do
         inst.const_name.must_equal "Module::En"

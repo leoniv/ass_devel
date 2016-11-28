@@ -61,17 +61,17 @@ module AssDevel
     end
 
     module External
-       module DataProcessor
+      module DataProcessor
         include Mixins::MdDescriber
-         def new_md_object(name)
+        def new_md_object(name)
           fail 'FIXME'
 #          MetaData::MdObjects::Externals::DataProcessor.new(name)
         end
       end
 
-       module Report
+      module Report
         include Mixins::MdDescriber
-         def new_md_object(name)
+        def new_md_object(name)
           fail 'FIXME'
 #          MetaData::MdObjects::Externals::Report.new(name)
         end
