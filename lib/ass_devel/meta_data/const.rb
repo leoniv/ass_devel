@@ -28,16 +28,15 @@ module AssDevel
           self.en = en.to_sym
           self.ru = ru.to_sym
           self.module_ = module_
-          self.class.dict[en] = ru
-          self.class.dict[ru] = en
-        end
-
-        def self.dict
-          @dict ||= {}
+          self.class.instances << self
         end
 
         def const_name
           "#{module_}::#{en}"
+        end
+
+        def self.instances
+          @instances ||= []
         end
       end
 
@@ -217,7 +216,114 @@ module AssDevel
         add :ReturnValuesReuse, :ReturnValuesReuse
       end
 
+      module MdCollections
+        class MdCollection < RuEnNamed
+          include IncludedInMdClass
+          attr_accessor :md_class_name
+          def initialize(en, ru, md_class_name, module_)
+            super en, ru, module_
+            self.md_class_name = md_class_name.to_sym
+          end
+
+          def md_class
+            MdClasses.get(md_class_name)
+          end
+        end
+
+        extend HaveContent
+
+        def self.klass
+          MdCollection
+        end
+
+        # Configuration Common
+        add :CommonModules, :ОбщиеМодули, :CommonModule
+        add :SessionParameters, :ПараметрыСеанса, :SessionParameter
+        add :Roles, :Роли, :Role
+        add :CommonAttributes, :ОбщиеРеквизиты, :CommonAttribute
+        add :ExchangePlans, :ПланыОбмена, :ExchangePlan
+        add :FilterCriteria, :КритерииОтбора, :FilterCriterion
+        add :EventSubscriptions, :ПодпискиНаСобытия, :EventSubscription
+        add :ScheduledJobs, :РегламентныеЗадания, :ScheduledJob
+        add :FunctionalOptions, :ФункциональныеОпции,
+          :FunctionalOption
+        add :FunctionalOptionsParameters, :ПараметрыФункциональныхОпций,
+          :FunctionalOptionsParameter
+        add :DefinedTypes, :ОпределяемыеТипы, :DefinedType
+        add :SettingsStorages, :ХранилищаНастроек, :SettingsStorage
+        add :CommonForms, :ОбщиеФормы, :Form
+        add :CommonCommands, :ОбщиеКоманды, :CommonCommand
+        add :CommandGroups, :ГруппыКоманд, :CommandGroup
+        add :CommonTemplates, :ОбщиеМакеты, :Template
+        add :CommonPictures, :ОбщиеКартинки, :CommonPicture
+        add :XDTOPackages, :ПакетыXDTO, :XDTOPackage
+        add :HTTPServices, :HTTPСервисы, :HTTPService
+        add :WebServices, :WebСервисы, :WebService
+        add :WSReferences, :WSСсылки, :WSReference
+        add :StyleItems, :ЭлементыСтиля, :StyleItem
+        add :Interfaces, :Интерфейсы, :Interface
+        add :Subsystems, :Подсистемы, :Subsystem
+        add :Styles, :Стили, :Style
+        add :Languages, :Языки, :Language
+
+        # Configuration Main
+        add :Constants, :Константы, :Constant
+        add :Catalogs, :Справочники, :Catalog
+        add :Documents, :Документы, :Document
+        add :DocumentNumerators, :НумераторыДокументов, :DocumentNumerator
+        add :Sequences, :Последовательности, :Sequence
+        add :DocumentJournals, :ЖурналыДокументов, :DocumentJournal
+        add :Enums, :Перечисления, :Enum
+        add :Reports, :Отчеты, :Report
+        add :DataProcessors, :Обработки, :DataProcessor
+        add :ChartsOfCharacteristicTypes, :ПланыВидовХарактеристик,
+          :ChartOfCharacteristicTypes
+        add :ChartsOfAccounts, :ПланыСчетов, :ChartOfAccounts
+        add :ChartsOfCalculationTypes, :ПланыВидовРасчета,
+          :ChartOfCalculationTypes
+        add :InformationRegisters, :РегистрыСведений, :InformationRegister
+        add :AccumulationRegisters, :РегистрыНакопления, :AccumulationRegister
+        add :AccountingRegisters, :РегистрыБухгалтерии, :AccountingRegister
+        add :CalculationRegisters, :РегистрыРасчета, :CalculationRegister
+        add :BusinessProcesses, :БизнесПроцессы, :BusinessProcess
+        add :Tasks, :Задачи, :Task
+        add :ExternalDataSources, :ВнешниеИсточникиДанных, :ExternalDataSource
+
+        add :Forms, :Формы, :Form
+        add :Attributes, :Реквизиты, :Attribute
+        add :TabularSections, :ТабличныеЧасти, :TabularSection
+        add :Templates, :Макеты, :Template
+        add :Commands, :Команды, :Command
+
+        add :Cubes, :Кубы, :Cube
+        add :Tables, :Таблицы, :Table
+        add :Functions, :Функции, :Function
+
+        add :Columns, :Графы, :Graph
+
+        add :AddressingAttributes, :РеквизитыАдресации, :AddressingAttribute
+
+        add :DimensionTables, :ТаблицыИзмерений, :DimensionTable
+        add :Dimensions, :Измерения, :Dimension
+        add :Resources, :Ресурсы, :Resource
+
+        add :URLTemplates, :ШаблоныURL, :HTTPServiceURLTemplate
+        add :Methods, :Методы, :HttpServiceMethod
+
+        add :Parameters, :Параметры, :WebServiceParameter
+        add :EnumValues, :ЗначенияПеречисления, :EnumValue
+
+        add :AccountingFlags, :ПризнакиУчета, :AccountingFlag
+        add :ExtDimensionAccountingFlags, :ПризнакиУчетаСубконто,
+          :ExtDimensionAccountingFlag
+        add :Recalculations, :Перерасчеты, :Recalculation
+
+        add :Fields, :Поля, :Field
+        add :Operations, :Операции, :WebServiceOperation
+      end
+
       module MdProperties
+        COMMON_PREFIX = :Common
         class RawProp < RuEnNamed
           attr_accessor :type
           def initialize(en, ru, type, module_)
@@ -228,9 +334,10 @@ module AssDevel
 
         class Prop < RawProp
           include IncludedInMdClass
-          attr_accessor :type
-          def initialize(en, ru, type, module_)
+          attr_accessor :type, :owner
+          def initialize(en, ru, type, owner, module_)
             super en, ru, find_type(type), module_
+            self.owner = owner
           end
 
           def find_type(type)
@@ -239,12 +346,40 @@ module AssDevel
             r
           end
           private :find_type
+
+          def const_name
+            "#{module_}::#{cn}"
+          end
+
+          def cn
+           "#{owner}_#{en}"
+          end
         end
 
         extend HaveContent
 
         def self.klass
           Prop
+        end
+
+        def self.add(en, ru, type, owner = COMMON_PREFIX)
+          r = klass.new(en, ru, type, owner, self)
+          const_set r.cn, r
+          content << r
+          yield r if block_given?
+        end
+
+        def self.get(en_ru, md_class_en)
+          get_for(en_ru, md_class_en) || get_for(en_ru, COMMON_PREFIX)
+        end
+
+        def self.get_for(en_ru, md_class_en)
+          content_for(md_class_en)\
+            .select {|r| r.en == en_ru.to_sym || r.ru == en_ru.to_sym}[0]
+        end
+
+        def self.content_for(owner)
+          content.select {|p| p.owner == owner}
         end
 
         add :Name, :Имя, :String
@@ -292,109 +427,13 @@ module AssDevel
         add :Hierarchical, :Иерархический, :Boolean
         add :Event, :Событие, :String
         add :Handler, :Обработчик, :String
-      end
 
-      module MdCollections
-        class MdCollection < RuEnNamed
-          include IncludedInMdClass
-          attr_accessor :md_class_name
-          def initialize(en, ru, md_class_name, module_)
-            super en, ru, module_
-            self.md_class_name = md_class_name.to_sym
-          end
+        add :Predefined, :Предопределенное, :Boolean, :ScheduledJob
+        add :MethodName, :ИмяМетода, :String
+        add :Use, :Использование, :Boolean, :ScheduledJob
+        add :Key, :Ключ, :String
 
-          def md_class
-            MdClasses.get(md_class_name)
-          end
-        end
-
-        extend HaveContent
-
-        def self.klass
-          MdCollection
-        end
-
-        # Configuration Common
-        add :CommonModules, :ОбщиеМодули, :CommonModule
-        add :SessionParameters, :ПараметрыСеанса, :SessionParameter
-        add :Roles, :Роли, :Role
-        add :CommonAttributes, :ОбщиеРеквизиты, :CommonAttribute
-        add :ExchangePlans, :ПланыОбмена, :ExchangePlan
-        add :FilterCriteria, :КритерииОтбора, :FilterCriterion
-        add :EventSubscriptions, :ПодпискиНаСобытия, :EventSubscription
-        add :ScheduledJobs, :РегламентныеЗадания, :ScheduledJob
-        add :FunctionalOptions, :ФункциональныеОпции,
-          :FunctionalOption
-        add :FunctionalOptionsParameters, :ПараметрыФункциональныхОпций,
-          :FunctionalOptionsParameter
-        add :DefinedTypes, :ОпределяемыеТипы, :DefinedType
-        add :SettingsStorages, :ХранилищаНастроек, :SettingsStorage
-        add :CommonForms, :ОбщиеФормы, :CommonForm
-        add :CommonCommands, :ОбщиеКоманды, :CommonCommand
-        add :CommandGroups, :ГруппыКоманд, :CommandGroup
-        add :CommonTemplates, :ОбщиеМакеты, :CommonTemplate
-        add :CommonPictures, :ОбщиеКартинки, :CommonPicture
-        add :XDTOPackages, :ПакетыXDTO, :XDTOPackage
-        add :HTTPServices, :HTTPСервисы, :HTTPService
-        add :WebServices, :WebСервисы, :WebService
-        add :WSReferences, :WSСсылки, :WSReference
-        add :StyleItems, :ЭлементыСтиля, :StyleItem
-        add :Interfaces, :Интерфейсы, :Interface
-        add :Subsystems, :Подсистемы, :Subsystem
-        add :Styles, :Стили, :Style
-        add :Languages, :Языки, :Language
-
-        # Configuration Main
-        add :Constants, :Константы, :Constant
-        add :Catalogs, :Справочники, :Catalog
-        add :Documents, :Документы, :Document
-        add :DocumentNumerators, :НумераторыДокументов, :DocumentNumerator
-        add :Sequences, :Последовательности, :Sequence
-        add :DocumentJournals, :ЖурналыДокументов, :DocumentJournal
-        add :Enums, :Перечисления, :Enum
-        add :Reports, :Отчеты, :Report
-        add :DataProcessors, :Обработки, :DataProcessor
-        add :ChartsOfCharacteristicTypes, :ПланыВидовХарактеристик,
-          :ChartOfCharacteristicTypes
-        add :ChartsOfAccounts, :ПланыСчетов, :ChartOfAccounts
-        add :ChartsOfCalculationTypes, :ПланыВидовРасчета,
-          :ChartOfCalculationTypes
-        add :InformationRegisters, :РегистрыСведений, :InformationRegister
-        add :AccumulationRegisters, :РегистрыНакопления, :AccumulationRegister
-        add :AccountingRegisters, :РегистрыБухгалтерии, :AccountingRegister
-        add :CalculationRegisters, :РегистрыРасчета, :CalculationRegister
-        add :BusinessProcesses, :БизнесПроцессы, :BusinessProcesse
-        add :Tasks, :Задачи, :Task
-        add :ExternalDataSources, :ВнешниеИсточникиДанных, :ExternalDataSource
-
-        add :Forms, :Формы, :Form
-        add :Attributes, :Реквизиты, :Attribute
-        add :TabularSections, :ТабличныеЧасти, :TabularSection
-        add :Templates, :Макеты, :Template
-        add :Commands, :Команды, :Command
-
-        add :Cubes, :Кубы, :Cube
-        add :Tables, :Таблицы, :Table
-        add :Functions, :Функции, :Function
-
-        add :Columns, :Графы, :Graph
-
-        add :AddressingAttributes, :РеквизитыАдресации, :AddressingAttribute
-
-        add :DimensionTables, :ТаблицыИзмерений, :DimensionTable
-        add :Dimensions, :Измерения, :Dimension
-        add :Resources, :Ресурсы, :Resource
-
-        add :URLTemplates, :ШаблоныURL, :HTTPServiceURLTemplate
-        add :Methods, :Методы, :HttpServiceMethod
-
-        add :Parameters, :Параметры, :WebServiceParameter
-        add :EnumValues, :ЗначенияПеречисления, :EnumValue
-
-        add :AccountingFlags, :ПризнакиУчета, :AccountingFlag
-        add :ExtDimensionAccountingFlags, :ПризнакиУчетаСубконто,
-          :ExtDimensionAccountingFlag
-        add :Recalculations, :Перерасчеты, :Recalculation
+        add :LanguageCode, :КодЯзыка, :String
       end
 
       module MdClasses
@@ -443,7 +482,15 @@ module AssDevel
           end
 
           def properties=(arr)
-            @properties = add_array (arr + DEF_PROPS), MdProperties
+            @properties = find_properties(arr + DEF_PROPS)
+          end
+
+          def find_properties(arr)
+            arr.map do |word|
+              fail ArgumentError, "#{word} not found in #{MdProperties}" unless\
+                MdProperties.get(word, en)
+              MdProperties.get(word, en)
+            end
           end
 
           def properties
@@ -2451,6 +2498,702 @@ module AssDevel
             Ресурсы (Resources)
             Справка (Help)
             Формы (Forms)
+          }
+        end
+
+        add :InformationRegister, :РегистрСведений do |klass|
+          klass.rights = %w{
+            Чтение
+            Изменение
+            Просмотр
+            Редактирование
+            УправлениеИтогами
+          }
+
+          klass.modules = %w{
+            ManagerModule
+            RecordSetModule
+          }
+
+          klass.collections = %w{
+            Dimensions
+            Resources
+            Attributes
+            Forms
+            Commands
+            Templates
+          }
+
+          klass.properties = %w{
+            Explanation
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            СтандартныеРеквизиты (StandardAttributes)
+            ВключатьСправкуВСодержание (IncludeHelpInContents)
+            ДополнительнаяФормаЗаписи (AuxiliaryRecordForm)
+            ДополнительнаяФормаСписка (AuxiliaryListForm)
+            Измерения (Dimensions)
+            ИспользоватьСтандартныеКоманды (UseStandardCommands)
+            Команды (Commands)
+            Макеты (Templates)
+            МодульМенеджера (ManagerModule)
+            МодульНабораЗаписей (RecordSetModule)
+            ОсновнаяФормаЗаписи (DefaultRecordForm)
+            ОсновнаяФормаСписка (DefaultListForm)
+            ОсновнойОтборПоПериоду (MainFilterOnPeriod)
+            ПериодичностьРегистраСведений (InformationRegisterPeriodicity)
+            ПолнотекстовыйПоиск (FullTextSearch)
+            Пояснение (Explanation)
+            ПредставлениеЗаписи (RecordPresentation)
+            ПредставлениеСписка (ListPresentation)
+            РазрешитьИтогиСрезПервых (EnableTotalsSliceFirst)
+            РазрешитьИтогиСрезПоследних (EnableTotalsSliceLast)
+            РасширенноеПредставлениеЗаписи (ExtendedRecordPresentation)
+            РасширенноеПредставлениеСписка (ExtendedListPresentation)
+            РежимЗаписи (WriteMode)
+            РежимУправленияБлокировкойДанных (DataLockControlMode)
+            Реквизиты (Attributes)
+            Ресурсы (Resources)
+            СпособРедактирования (EditType)
+            Справка (Help)
+            Формы (Forms)
+          }
+        end
+
+        add :ScheduledJob, :РегламентноеЗадание do |klass|
+          klass.properties = %w{
+            Predefined
+            MethodName
+            Use
+            Key
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            ИмяМетода (MethodName)
+            ИнтервалПовтораПриАварийномЗавершении (RestartIntervalOnFailure)
+            Использование (Use)
+            Ключ (Key)
+            КоличествоПовторовПриАварийномЗавершении (RestartCountOnFailure)
+            Наименование (Description)
+            Предопределенное (Predefined)
+            Расписание (Schedule)
+          }
+        end
+
+        add :AddressingAttribute, :РеквизитАдресации do |klass|
+          klass.rights = %w{
+            Просмотр
+            Редактирование
+          }
+
+          klass.properties = %w{
+            Tooltip
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            БыстрыйВыбор (QuickChoice)
+            ВыборГруппИЭлементов (ChoiceFoldersAndItems)
+            ВыделятьОтрицательные (MarkNegatives)
+            ЗаполнятьИзДанныхЗаполнения (FillFromFillingValue)
+            ИзмерениеАдресации (AddressingDimension)
+            Индексирование (Indexing)
+            ИсторияВыбораПриВводе (ChoiceHistoryOnInput)
+            Маска (Mask)
+            МногострочныйРежим (MultiLine)
+            ПараметрыВыбора (ChoiceParameters)
+            Подсказка (Tooltip)
+            ПолнотекстовыйПоиск (FullTextSearch)
+            ПроверкаЗаполнения (FillChecking)
+            РасширенноеРедактирование (ExtendedEdit)
+            РежимПароля (PasswordMode)
+            СвязиПараметровВыбора (ChoiceParameterLinks)
+            СвязьПоТипу (LinkByType)
+            СозданиеПриВводе (CreateOnInput)
+            Тип (Type)
+            ФормаВыбора (ChoiceForm)
+            Формат (Format)
+            ФорматРедактирования (EditFormat)
+          }
+        end
+
+        add :Attribute, :Реквизит do |klass|
+          klass.rights = %w{
+            Просмотр
+            Редактирование
+          }
+
+          klass.properties = %w{
+            Tooltip
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            БыстрыйВыбор (QuickChoice)
+            ВыборГруппИЭлементов (ChoiceFoldersAndItems)
+            ВыделятьОтрицательные (MarkNegatives)
+            ЗаполнятьИзДанныхЗаполнения (FillFromFillingValue)
+            ЗначениеЗаполнения (FillingValue)
+            Индексирование (Indexing)
+            Использование (Use)
+            ИсторияВыбораПриВводе (ChoiceHistoryOnInput)
+            МаксимальноеЗначение (MaxValue)
+            Маска (Mask)
+            МинимальноеЗначение (MinValue)
+            МногострочныйРежим (MultiLine)
+            ПараметрыВыбора (ChoiceParameters)
+            Подсказка (Tooltip)
+            ПолнотекстовыйПоиск (FullTextSearch)
+            ПроверкаЗаполнения (FillChecking)
+            РасширенноеРедактирование (ExtendedEdit)
+            РежимПароля (PasswordMode)
+            СвязиПараметровВыбора (ChoiceParameterLinks)
+            СвязьПоТипу (LinkByType)
+            СозданиеПриВводе (CreateOnInput)
+            Тип (Type)
+            ФормаВыбора (ChoiceForm)
+            Формат (Format)
+            ФорматРедактирования (EditFormat)
+          }
+        end
+
+        add :Resource, :Ресурс do |klass|
+          klass.rights = %w{
+            Просмотр
+            Редактирование
+          }
+
+          klass.properties = %w{
+            Tooltip
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            Балансовый (Balance)
+            БыстрыйВыбор (QuickChoice)
+            ВыборГруппИЭлементов (ChoiceFoldersAndItems)
+            ВыделятьОтрицательные (MarkNegatives)
+            ЗаполнятьИзДанныхЗаполнения (FillFromFillingValue)
+            Индексирование (Indexing)
+            ИсторияВыбораПриВводе (ChoiceHistoryOnInput)
+            Маска (Mask)
+            МногострочныйРежим (MultiLine)
+            ПараметрыВыбора (ChoiceParameters)
+            Подсказка (Tooltip)
+            ПолнотекстовыйПоиск (FullTextSearch)
+            ПризнакУчета (AccountingFlag)
+            ПризнакУчетаСубконто (ExtDimensionAccountingFlag)
+            ПроверкаЗаполнения (FillChecking)
+            РасширенноеРедактирование (ExtendedEdit)
+            РежимПароля (PasswordMode)
+            СвязиПараметровВыбора (ChoiceParameterLinks)
+            СвязьПоТипу (LinkByType)
+            СозданиеПриВводе (CreateOnInput)
+            Тип (Type)
+            ФормаВыбора (ChoiceForm)
+            Формат (Format)
+            ФорматРедактирования (EditFormat)
+          }
+        end
+
+        add :Role, :Роль do |klass|
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            Права (Rights)
+          }
+        end
+
+        add :Catalog, :Справочник do |klass|
+          klass.rights = %w{
+            Чтение
+            Добавление
+            Изменение
+            Удаление
+            Просмотр
+            ИнтерактивноеДобавление
+            Редактирование
+            ИнтерактивноеУдаление
+            ИнтерактивнаяПометкаУдаления
+            ИнтерактивноеСнятиеПометкиУдаления
+            ИнтерактивноеУдалениеПомеченных
+            ВводПоСтроке
+            ИнтерактивноеУдалениеПредопределенныхДанных
+            ИнтерактивнаяПометкаУдаленияПредопределенныхДанных
+            ИнтерактивноеСнятиеПометкиУдаленияПредопределенныхДанных
+            ИнтерактивноеУдалениеПомеченныхПредопределенныхДанных
+          }
+
+          klass.modules = %w{
+            ManagerModule
+            ObjectModule
+          }
+
+          klass.collections = COLLECTIONS_A_T_F_C_T
+
+          klass.properties = %w{
+            CodeLength
+            Hierarchical
+            CheckUnique
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            СтандартныеРеквизиты (StandardAttributes)
+            Автонумерация (Autonumbering)
+            БыстрыйВыбор (QuickChoice)
+            ВводитсяНаОсновании (BasedOn)
+            ВводПоСтроке (InputByString)
+            ВидИерархии (HierarchyType)
+            ВключатьСправкуВСодержание (IncludeHelpInContents)
+            Владельцы (Owners)
+            ГруппыСверху (FoldersOnTop)
+            ДлинаКода (CodeLength)
+            ДлинаНаименования (DescriptionLength)
+            ДополнительнаяФормаГруппы (AuxiliaryFolderForm)
+            ДополнительнаяФормаДляВыбора (AuxiliaryChoiceForm)
+            ДополнительнаяФормаДляВыбораГруппы (AuxiliaryFolderChoiceForm)
+            ДополнительнаяФормаОбъекта (AuxiliaryObjectForm)
+            ДополнительнаяФормаСписка (AuxiliaryListForm)
+            ДопустимаяДлинаКода (CodeAllowedLength)
+            Иерархический (Hierarchical)
+            ИспользованиеПодчинения (SubordinationUse)
+            ИспользоватьСтандартныеКоманды (UseStandardCommands)
+            ИсторияВыбораПриВводе (ChoiceHistoryOnInput)
+            КоличествоУровней (LevelCount)
+            Команды (Commands)
+            КонтрольУникальности (CheckUnique)
+            Макеты (Templates)
+            МодульМенеджера (ManagerModule)
+            МодульОбъекта (ObjectModule)
+            ОбновлениеПредопределенныхДанных (PredefinedDataUpdate)
+            ОграничиватьКоличествоУровней (LimitLevelCount)
+            ОсновнаяФормаГруппы (DefaultFolderForm)
+            ОсновнаяФормаДляВыбора (DefaultChoiceForm)
+            ОсновнаяФормаДляВыбораГруппы (DefaultFolderChoiceForm)
+            ОсновнаяФормаОбъекта (DefaultObjectForm)
+            ОсновнаяФормаСписка (DefaultListForm)
+            ОсновноеПредставление (DefaultPresentation)
+            ПолнотекстовыйПоиск (FullTextSearch)
+            ПолнотекстовыйПоискПриВводеПоСтроке (FullTextSearchOnInputByString)
+            ПоляБлокировкиДанных (DataLockFields)
+            Пояснение (Explanation)
+            Предопределенные (Predefined)
+            ПредставлениеОбъекта (ObjectPresentation)
+            ПредставлениеСписка (ListPresentation)
+            РасширенноеПредставлениеОбъекта (ExtendedObjectPresentation)
+            РасширенноеПредставлениеСписка (ExtendedListPresentation)
+            РежимПолученияДанныхВыбораПриВводеПоСтроке (ChoiceDataGetModeOnInputByString)
+            РежимУправленияБлокировкойДанных (DataLockControlMode)
+            Реквизиты (Attributes)
+            СерииКодов (CodeSeries)
+            СозданиеПриВводе (CreateOnInput)
+            СпособВыбора (ChoiceMode)
+            СпособПоискаСтрокиПриВводеПоСтроке (SearchStringModeOnInputByString)
+            СпособРедактирования (EditType)
+            Справка (Help)
+            ТабличныеЧасти (TabularSections)
+            ТипКода (CodeType)
+            Формы (Forms)
+            Характеристики (Characteristics)
+          }
+
+        end
+
+        add :Style, :Стиль do |klass|
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            Стиль (Style)
+          }
+        end
+
+        add :StyleItem, :ЭлементСтиля do |klass|
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            Вид (Type)
+            Значение (Value)
+          }
+        end
+
+        add :DimensionTable, :ТаблицаИзмерения do |klass|
+          klass.rights = %w{
+            Чтение
+            Просмотр
+          }
+
+          klass.modules = %w{
+            ManagerModule
+            ObjectModule
+          }
+
+          klass.collections = %w{
+            Fields
+            Forms
+            Templates
+            Commands
+          }
+
+          klass.properties = %w{
+            Explanation
+            Hierarchical
+            NameInDataSource
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            БыстрыйВыбор (QuickChoice)
+            ВключатьСправкуВСодержание (IncludeHelpInContents)
+            ЗначениеНезаполненногоРодителя (UnfilledParentValue)
+            Иерархическая (Hierarchical)
+            ИмяВИсточникеДанных (NameInDataSource)
+            ИмяИерархииВИсточникеДанных (HierarchyNameInDataSource)
+            ИспользоватьСтандартныеКоманды (UseStandardCommands)
+            Макеты (Templates)
+            МодульМенеджера (ManagerModule)
+            МодульОбъекта (ObjectModule)
+            НомерУровня (LevelNumber)
+            ОсновнаяФормаДляВыбора (DefaultChoiceForm)
+            ОсновнаяФормаОбъекта (DefaultObjectForm)
+            ОсновнаяФормаСписка (DefaultListForm)
+            ПолеПредставления (PresentationField)
+            Поля (Fields)
+            Пояснение (Explanation)
+            ПредставлениеОбъекта (ObjectPresentation)
+            ПредставлениеСписка (ListPresentation)
+            РасширенноеПредставлениеОбъекта (ExtendedObjectPresentation)
+            РасширенноеПредставлениеСписка (ExtendedListPresentation)
+            Справка (Help)
+            Формы (Forms)
+            Команды (Commands)
+          }
+        end
+
+        add :Table, :Таблица do |klass|
+          klass.rights = %w{
+            Чтение
+            Просмотр
+            ВводПоСтроке
+          }
+
+          klass.modules = %w{
+            ManagerModule
+            RecordSetModule
+          }
+
+          klass.collections = %w{
+            Commands
+            Fields
+            Templates
+            Forms
+          }
+
+          klass.properties = %w{
+            Explanation
+            NameInDataSource
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            БыстрыйВыбор (QuickChoice)
+            ВводитсяНаОсновании (BasedOn)
+            ВводПоСтроке (InputByString)
+            ВидТаблицы (TableType)
+            ВключатьСправкуВСодержание (IncludeHelpInContents)
+            ВыражениеВИсточникеДанных (ExpressionInDataSource)
+            ЗначениеНезаполненногоРодителя (UnfilledParentValue)
+            ИмяВИсточникеДанных (NameInDataSource)
+            ИспользоватьСтандартныеКоманды (UseStandardCommands)
+            ИсторияВыбораПриВводе (ChoiceHistoryOnInput)
+            Команды (Commands)
+            Макеты (Templates)
+            МодульМенеджера (ManagerModule)
+            МодульНабораЗаписей (RecordSetModule)
+            МодульОбъекта (ObjectModule)
+            ОсновнаяФормаДляВыбора (DefaultChoiceForm)
+            ОсновнаяФормаЗаписи (DefaultRecordForm)
+            ОсновнаяФормаОбъекта (DefaultObjectForm)
+            ОсновнаяФормаСписка (DefaultListForm)
+            ПолеВерсииДанных (DataVersionField)
+            ПолеПредставления (PresentationField)
+            ПолеРодителя (ParentField)
+            Поля (Fields)
+            ПоляБлокировкиДанных (DataLockFields)
+            ПоляКлюча (KeyFields)
+            Пояснение (Explanation)
+            ПредставлениеЗаписи (RecordPresentation)
+            ПредставлениеОбъекта (ObjectPresentation)
+            ПредставлениеСписка (ListPresentation)
+            РасширенноеПредставлениеЗаписи (ExtendedRecordPresentation)
+            РасширенноеПредставлениеОбъекта (ExtendedObjectPresentation)
+            РасширенноеПредставлениеСписка (ExtendedListPresentation)
+            РежимПолученияДанныхВыбораПриВводеПоСтроке (ChoiceDataGetModeOnInputByString)
+            РежимУправленияБлокировкойДанных (DataLockControlMode)
+            СозданиеПриВводе (CreateOnInput)
+            СпособПоискаСтрокиПриВводеПоСтроке (SearchStringModeOnInputByString)
+            СпособРедактирования (EditType)
+            Справка (Help)
+            ТипДанныхТаблицы (TableDataType)
+            ТолькоЧтение (ReadOnly)
+            УровеньИзоляцииТранзакций (TransactionsIsolationLevel)
+            Формы (Forms)
+            Характеристики (Characteristics)
+          }
+        end
+
+        add :TabularSection, :ТабличнаяЧасть do |klass|
+          klass.rights = %w{
+            Просмотр
+            Редактирование
+          }
+
+          klass.collections = %w{
+            Attributes
+          }
+
+          klass.properties = %w{
+            Tooltip
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            Использование (Use)
+            Подсказка (Tooltip)
+            ПроверкаЗаполнения (FillChecking)
+            Реквизиты (Attributes)
+            СтандартныеРеквизиты (StandardProperties)
+          }
+        end
+
+        add :Form, :Форма do |klass|
+          klass.rights = %w{
+            Просмотр
+          }
+
+          klass.modules = %w{
+            Module
+          }
+
+          klass.properties = %w{
+            Explanation
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            ВключатьСправкуВСодержание (IncludeHelpInContents)
+            НазначенияИспользования (UsePurposes)
+            Пояснение (Explanation)
+            РасширенноеПредставление (ExtendedPresentation)
+            Справка (Help)
+            ТипФормы (FormType)
+            Форма (Form)
+          }
+        end
+
+        add :FunctionalOption, :ФункциональнаяОпция do |klass|
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            ПривилегированныйРежимПриПолучении (PrivilegedGetMode)
+            Состав (Content)
+            Хранение (Location)
+          }
+        end
+
+        add :Function, :Функция do |klass|
+          klass.rights = %w{
+            Использование
+            Просмотр
+          }
+
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            ВозвращаетЗначение (ReturnValue)
+            ВыражениеВИсточникеДанных (ExpressionInDataSource)
+            Тип (Type)
+          }
+        end
+
+        add :SettingsStorage, :ХранилищеНастроек do |klass|
+          klass.modules = %w{
+            ManagerModule
+          }
+
+          klass.collections = %w{
+            Forms
+            Templates
+          }
+
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            ДополнительнаяФормаЗагрузки (AuxiliaryLoadForm)
+            ДополнительнаяФормаСохранения (AuxiliarySaveForm)
+            Макеты (Templates)
+            МодульМенеджера (ManagerModule)
+            ОсновнаяФормаЗагрузки (DefaultLoadForm)
+            ОсновнаяФормаСохранения (DefaultSaveForm)
+            Формы (Forms)
+          }
+        end
+
+        add :Language, :Язык do |klass|
+          klass.properties = %w{
+            LanguageCode
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            КодЯзыка (LanguageCode)
+          }
+        end
+
+        add :HTTPService, :HTTPСервис do |klass|
+          klass.modules = %w{
+            Module
+          }
+
+          klass.collections = %w{
+            URLTemplates
+          }
+
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            ВремяЖизниСеанса (SessionMaxAge)
+            КорневойURL (RootURL)
+            Модуль (Module)
+            ПовторноеИспользованиеСеансов (ReuseSessions)
+            ШаблоныURL (URLTemplates)
+          }
+        end
+
+        add :WebService, :WebСервис do |klass|
+          klass.modules = %w{
+            Module
+          }
+
+          klass.collections = %w{
+            Operations
+          }
+
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            ВремяЖизниСеанса (SessionMaxAge)
+            ИмяФайлаПубликации (DescriptorFileName)
+            Модуль (Module)
+            Операции (Operations)
+            ПакетыXDTO (XDTOPackages)
+            ПовторноеИспользованиеСеансов (ReuseSessions)
+            ПространствоИмен (Namespace)
+          }
+        end
+
+        add :WSReference, :WSСсылка do |klass|
+          klass.properties = %w{
+          }
+
+          klass.raw_props = %{
+            Имя (Name)
+            Комментарий (Comment)
+            ПринадлежностьОбъекта (ObjectBelonging)
+            Синоним (Synonym)
+            URLИсточника (LocationURL)
+            WSОпределение (WSDefinition)
+          }
+        end
+
+        add :HttpServiceMethod, :МетодHTTPСервиса  do |klass|
+          klass.rights = %w{
+            Использование
+          }
+
+          klass.properties = %w{
+            Handler
+          }
+
+          klass.raw_props = %{
+            HTTPМетод (HTTPMethod)
+            Обработчик (Handler)
           }
         end
       end

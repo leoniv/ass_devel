@@ -10,10 +10,6 @@ module AssDevelTest
       it "Instace method #const_name" do
         inst.const_name.must_equal "Module::En"
       end
-
-      it "Class method .dict" do
-        klass.dict.must_equal({:En => :Ru, :Ru => :En})
-      end
     end
 
     module HaveContentTest
@@ -38,7 +34,10 @@ module AssDevelTest
             end
 
             it "Method #{base}.get" do
-              self.class.desc.get(elem.ru).must_equal elem
+              self.class.desc.get(elem.ru, elem.owner)\
+                .must_equal elem if elem.respond_to? :owner
+              self.class.desc.get(elem.ru)\
+                .must_equal elem unless elem.respond_to? :owner
             end
           end
         end
@@ -130,8 +129,18 @@ module AssDevelTest
     end
 
     describe AssDevel::MetaData::Const::MdProperties do
-      it 'FIXME' do
-        fail 'FIXME'
+      include HaveContentTest
+      include ConstSetTest
+
+      it '#cn' do
+        prop = self.class.desc.content[0]
+        prop.cn.must_equal "#{prop.owner}_#{prop.en}"
+      end
+
+      it '#const_name' do
+        prop = self.class.desc.content[0]
+        prop.const_name.must_equal\
+          "AssDevel::MetaData::Const::MdProperties::#{prop.cn}"
       end
     end
   end
