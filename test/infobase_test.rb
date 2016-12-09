@@ -108,12 +108,44 @@ module AssDevelTest
       inst.make.must_equal :ib
     end
 
-    it '#make_infobase! moked' do
+    it '#make_infobase! if src_diff? moked' do
       seq = sequence('make')
       AssTests::InfoBases::InfoBase.any_instance.expects(:make_infobase!)
         .in_sequence(seq).returns(:ib)
+      inst.expects(:src_diff?).in_sequence(seq).returns true
       inst.expects(:load_cfg_src).in_sequence(seq)
       inst.send(:make_infobase!).must_equal inst
+    end
+
+    it '#make_infobase! unless src_diff? moked' do
+      seq = sequence('make')
+      AssTests::InfoBases::InfoBase.any_instance.expects(:make_infobase!)
+        .in_sequence(seq).returns(:ib)
+      inst.expects(:src_diff?).in_sequence(seq).returns false
+      inst.expects(:load_cfg_src).never
+      inst.send(:make_infobase!).must_equal inst
+    end
+
+    it '#src_diff? true' do
+      cfg_src = mock
+      cfg_src.expects :repo_ls_tree => '1'
+      cfg_src.expects :repo_ls_tree => '2'
+      inst.expects(:db_cfg_src).returns(cfg_src)
+      inst.expects(:cfg_src).returns(cfg_src).twice
+      inst.src_diff?.must_equal true
+    end
+
+    it '#src_diff? false' do
+      cfg_src = stub :repo_ls_tree => '1'
+      inst.expects(:db_cfg_src).returns(cfg_src)
+      inst.expects(:cfg_src).returns(cfg_src).twice
+      inst.src_diff?.must_equal false
+    end
+
+    it '#src_diff? false if cfg_src.nil?' do
+      inst.expects(:cfg_src).returns(nil)
+      inst.expects(:db_cfg_src).never
+      inst.src_diff?.must_equal false
     end
 
     it '#fail_if_src_not_exists fail' do
@@ -175,16 +207,18 @@ module AssDevelTest
 
     include AssDevel::Support::TmpPath
     it 'InfoBase_make_smoky' do
-      def src_mock
+      def src_mock(repo_ls_tree)
         src = mock
         src.responds_like(src_stub)
         src.expects(:exists?).returns(true).at_least_once
         src.expects(:src_root).returns(Fixtures::IB_XML_SRC).at_least_once
+        src.expects(:repo_ls_tree).returns(repo_ls_tree)
         src
       end
 
       cs = AssDevel::TmpInfoBase.new.connection_string
-      ib = AssDevel::InfoBase.new('name', cs, src_mock, src_mock)
+      ib = AssDevel::InfoBase
+        .new('name', cs, src_mock('ls_tree 1'), src_mock('ls tree 2'))
       begin
         ib.exists?.must_equal false
         ib.make

@@ -81,15 +81,21 @@ module AssDevel
 
     def make_infobase!
       super
-      load_cfg_src if cfg_src
+      load_cfg_src if src_diff?
       return self
     end
     private :make_infobase!
+
+    def src_diff?
+      return false if cfg_src.nil?
+      db_cfg_src.repo_ls_tree != cfg_src.repo_ls_tree
+    end
 
     def load_cfg_src
       fail_if_src_not_exists(cfg_src)
       cfg.load_xml(cfg_src.src_root)
     end
+    private :load_cfg_src
 
     def fail_if_src_not_exists(src)
       fail "#{src} not exists" unless src.exists?
