@@ -19,11 +19,13 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "unicode"
-  spec.add_dependency "ass_launcher"
+  spec.add_dependency "ass_launcher", "~> 0.2.0"
   spec.add_dependency "ass_tests"
 
   spec.add_development_dependency "bundler", "~> 1.10"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "pry"
+  spec.add_development_dependency "mocha"
+  spec.add_development_dependency "simplecov"
 end
