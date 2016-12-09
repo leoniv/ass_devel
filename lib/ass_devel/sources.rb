@@ -1,6 +1,7 @@
 module AssDevel
   module Sources
     require 'fileutils'
+    require 'diffy'
 
     module Abstract
       # Mixin for reade and write dumper version
@@ -81,6 +82,10 @@ module AssDevel
 
         def repo_add_to_index
           handle_shell "git add #{src_root}"
+        end
+
+        def repo_ls_tree
+          handle_shell "git ls-tree -r HEAD #{src_root}"
         end
 
         def rm_rf!
@@ -241,11 +246,11 @@ module AssDevel
       end
 
       def src_diff
-        fail NotImplemetedError
+        Diffy::Diff.new(db_cfg_src.repo_ls_tree, cfg_src.repo_ls_tree)
       end
 
       def src_diff?
-        fail NotImplemetedError
+        db_cfg_src.repo_ls_tree != cfg_src.repo_ls_tree
       end
     end
   end
