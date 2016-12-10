@@ -10,7 +10,7 @@ module AssDevelTest
     end
   end
 
-  describe AssDevel::Sources::Abstract::HaveRootFile do
+  describe AssDevel::Sources::HaveRootFile do
     include desc
     def self.ROOT_FILE
       name
@@ -22,7 +22,7 @@ module AssDevelTest
     end
   end
 
-  describe AssDevel::Sources::Abstract::DumperVersionWriter do
+  describe AssDevel::Sources::DumperVersionWriter do
     include desc
     it '#read_dumper_version' do
       self.expects(:dumper_version_file).returns(:dumper_version_file)
@@ -313,9 +313,9 @@ module AssDevelTest
     end
   end
 
-  describe AssDevel::Sources::Application::DbCfgSrc do
+  describe AssDevel::Sources::DbCfgSrc do
     def inst_stub
-      @inst_stub ||= Class.new(AssDevel::Sources::Application::DbCfgSrc) do
+      @inst_stub ||= Class.new(AssDevel::Sources::DbCfgSrc) do
         def initialize
 
         end
@@ -339,9 +339,9 @@ module AssDevelTest
     end
   end
 
-  describe AssDevel::Sources::Application::CfgSrc do
+  describe AssDevel::Sources::CfgSrc do
     def inst_stub
-      @inst_stub ||= Class.new(AssDevel::Sources::Application::CfgSrc) do
+      @inst_stub ||= Class.new(AssDevel::Sources::CfgSrc) do
         def initialize
 
         end
@@ -365,9 +365,9 @@ module AssDevelTest
     end
   end
 
-  describe AssDevel::Sources::Application do
+  describe AssDevel::Application::Src do
     def inst_stub
-      @inst_stub ||= Class.new AssDevel::Sources::Application do
+      @inst_stub ||= Class.new AssDevel::Application::Src do
         def initialize
 
         end

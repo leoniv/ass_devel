@@ -14,5 +14,6 @@ module AssDevel
   require 'ass_devel/info_base'
   require 'ass_devel/sources'
   require 'ass_devel/cycles'
-  require 'ass_devel/dsl'
+  require 'ass_devel/application'
+  require 'ass_devel/externals'
 end
