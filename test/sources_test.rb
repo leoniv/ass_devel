@@ -61,7 +61,7 @@ module AssDevelTest
 
     it '#initialize fail' do
       e = proc {
-        AssDevel::Sources::Abstract::Src.new('', :owner)
+        AssDevel::Sources::Abstract::Src.new('')
       }.must_raise ArgumentError
       e.message.must_match %r{src_root must not be nil}
     end
@@ -71,14 +71,8 @@ module AssDevelTest
       begin
         AssDevel::Sources::Abstract::Src.any_instance
           .expects(:fail_if_repo_not_clear)
-        AssDevel::Sources::Abstract::Src.any_instance
-          .expects(:platform_require).returns(:platform_require)
-        inst = AssDevel::Sources::Abstract::Src.new(:src_root, :owner)
+        inst = AssDevel::Sources::Abstract::Src.new(:src_root)
         inst.src_root.must_equal :src_root
-        inst.owner.must_equal :owner
-        AssDevel::InfoBase.config.platform_require.must_equal :platform_require
-      ensure
-        AssDevel::InfoBase.config.platform_require = old_platform_require
       end
     end
 
@@ -93,23 +87,6 @@ module AssDevelTest
     it 'fail_if_repo_not_clear not fail' do
       inst_stub.expects(:repo_clear?).returns(true)
       assert_nil inst_stub.send(:fail_if_repo_not_clear)
-    end
-
-    it '#platform_require fail' do
-      owner = mock
-      owner.expects(:platform_require).returns(nil)
-      inst_stub.expects(:owner).returns(owner)
-      e = proc {
-        inst_stub.platform_require
-      }.must_raise RuntimeError
-      e.message.must_match %r{Not specified platform_require}i
-    end
-
-    it '#platform_require not fail' do
-      owner = mock
-      owner.expects(:platform_require).returns(:platform_require).twice
-      inst_stub.expects(:owner).returns(owner).twice
-      inst_stub.platform_require.must_equal :platform_require
     end
 
     it '#dumper_version' do
@@ -219,12 +196,12 @@ module AssDevelTest
   describe AssDevel::Sources::Abstract::CfgSrc do
     include AssertItAbstract
 
-    def inst_stub(owner = nil)
+    def inst_stub(app_src = nil)
       @inst_stub ||= Class.new(AssDevel::Sources::Abstract::CfgSrc) do
-        def initialize(owner)
-          @owner = owner
+        def initialize(app_src)
+          @app_src = app_src
         end
-      end.new(owner)
+      end.new(app_src)
     end
 
     it '.ROOT_FILE' do
@@ -238,22 +215,22 @@ module AssDevelTest
     end
 
     it '#dumper_version' do
-      owner = mock
-      owner.expects(:dumper_version).returns(:dumper_version)
-      inst_stub(owner).dumper_version.must_equal :dumper_version
+      app_src = mock
+      app_src.expects(:dumper_version).returns(:dumper_version)
+      inst_stub(app_src).dumper_version.must_equal :dumper_version
     end
 
     it '#src_root' do
-      owner = mock
-      owner.expects(:src_root).returns('owner_src_root')
-      inst_stub(owner).class.expects(:DIR).returns('dir')
-      inst_stub.src_root.must_equal 'owner_src_root/dir'
+      app_src = mock
+      app_src.expects(:src_root).returns('app_src_src_root')
+      inst_stub(app_src).class.expects(:DIR).returns('dir')
+      inst_stub.src_root.must_equal 'app_src_src_root/dir'
     end
 
     it '#info_base or #ib' do
-      owner = mock
-      owner.expects(:info_base).returns(:info_base).twice
-      inst_stub(owner).info_base.must_equal :info_base
+      app_src = mock
+      app_src.expects(:info_base).returns(:info_base).twice
+      inst_stub(app_src).info_base.must_equal :info_base
       inst_stub.ib.must_equal :info_base
     end
 
@@ -295,15 +272,15 @@ module AssDevelTest
       ib.expects(:thick).returns(thick)
       ib.expects(:cfg).returns(cfg)
 
-      owner = mock
+      app_src = mock
 
-      inst_stub(owner).expects(:exists?).in_sequence(seq).returns(false)
+      inst_stub(app_src).expects(:exists?).in_sequence(seq).returns(false)
       inst_stub.expects(:platform_require).in_sequence(seq).returns('42')
       AssDevel::TmpInfoBase.expects(:make_rm)
         .in_sequence(seq).with(platform_require: '42').yields(ib)
       inst_stub.expects(:src_root).in_sequence(seq).returns(:src_root)
       FileUtils.expects(:mkdir_p).in_sequence(seq).with(:src_root)
-      owner.expects(:write_dumper_version).with(:dumper_version)
+      app_src.expects(:write_dumper_version).with(:dumper_version)
         .in_sequence(seq)
       inst_stub.expects(:src_root).in_sequence(seq).returns(:src_root)
       cfg.expects(:dump_xml).in_sequence(seq).with(:src_root)
@@ -362,50 +339,6 @@ module AssDevelTest
       inst_stub.expects(:info_base).returns(info_base)
       inst_stub.expects(:src_root).returns(:src_root)
       inst_stub.send(:dump_).must_equal :dump_
-    end
-  end
-
-  describe AssDevel::Application::Src do
-    def inst_stub
-      @inst_stub ||= Class.new AssDevel::Application::Src do
-        def initialize
-
-        end
-      end.new
-    end
-    it '#initialize' do
-      skip
-    end
-
-    it '#init_src' do
-      skip
-    end
-
-    it '#src_diff' do
-      cfg_src = mock
-      cfg_src.expects(:repo_ls_tree).returns('1 ls tree')
-      cfg_src.expects(:repo_ls_tree).returns('2 ls tree')
-      inst_stub.expects(:db_cfg_src).returns(cfg_src)
-      inst_stub.expects(:cfg_src).returns(cfg_src)
-      diff = inst_stub.src_diff
-      diff.must_be_instance_of Diffy::Diff
-    end
-
-    it '#src_diff? false' do
-      cfg_src = mock
-      cfg_src.expects(:repo_ls_tree).returns('ls tree').twice
-      inst_stub.expects(:db_cfg_src).returns(cfg_src)
-      inst_stub.expects(:cfg_src).returns(cfg_src)
-      inst_stub.src_diff?.must_equal false
-    end
-
-    it '#src_diff true' do
-      cfg_src = mock
-      cfg_src.expects(:repo_ls_tree).returns('1 ls tree')
-      cfg_src.expects(:repo_ls_tree).returns('2 ls tree')
-      inst_stub.expects(:db_cfg_src).returns(cfg_src)
-      inst_stub.expects(:cfg_src).returns(cfg_src)
-      inst_stub.src_diff?.must_equal true
     end
   end
 end

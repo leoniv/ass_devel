@@ -32,16 +32,15 @@ module AssDevel
       class Src
         include Support::TmpPath
         include Support::Logger
-        attr_reader :src_root, :owner
+        attr_reader :src_root
         alias_method :path, :src_root
 
-        def initialize(src_root, owner)
+        def initialize(src_root)
           fail ArgumentError, 'src_root must not be nil' if src_root.to_s.empty?
           @src_root = src_root
-          @owner = owner
-          AssDevel::InfoBase.configure do |config|
-            config.platform_require = platform_require
-          end
+#          AssDevel::InfoBase.configure do |config|
+#            config.platform_require = platform_require
+#          end
           fail_if_repo_not_clear
         end
 
@@ -50,11 +49,11 @@ module AssDevel
         end
         private :fail_if_repo_not_clear
 
-        def platform_require
-          fail 'Not specified platform_require' if\
-            owner.platform_require.to_s.empty?
-          owner.platform_require
-        end
+#        def platform_require
+#          fail 'Not specified platform_require' if\
+#            owner.platform_require.to_s.empty?
+#          owner.platform_require
+#        end
 
         def dumper_version
           fail 'Abstract method call'
@@ -107,20 +106,26 @@ module AssDevel
       class CfgSrc < Src
         include HaveRootFile
 
+        attr_reader :app_src
+        def initialize(app_src)
+          super app_src.src_root
+          @app_src = app_src
+        end
+
         def self.ROOT_FILE
           'Configuration.xml'
         end
 
         def dumper_version
-          owner.dumper_version
+          app_src.dumper_version
         end
 
         def src_root
-          File.join(owner.src_root, self.class.DIR)
+          File.join(app_src.src_root, self.class.DIR)
         end
 
         def info_base
-          owner.info_base
+          app_src.info_base
         end
         alias_method :ib, :info_base
 
@@ -139,7 +144,7 @@ module AssDevel
           fail 'Src exists' if exists?
           TmpInfoBase.make_rm platform_require: platform_require do |ib|
             FileUtils.mkdir_p src_root
-            owner.write_dumper_version(ib.thick.version)
+            app_src.write_dumper_version(ib.thick.version)
             ib.cfg.dump_xml(src_root)
           end
           repo_add_to_index

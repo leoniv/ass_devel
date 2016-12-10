@@ -1,6 +1,20 @@
 module AssDevel
   module Application
-    require 'ass_devel/application/dsl'
+    # @todo it's stub
+    class Specification
+      attr_accessor :name, :platform_require, :src_root
+
+      def src
+        @src ||= Src.new(self)
+      end
+      attr_accessor :Synonym
+      attr_accessor :Comment
+      attr_accessor :Version
+      attr_accessor :Copyright
+      attr_accessor :BriefInformation
+      attr_accessor :DetailedInformation
+      attr_accessor :ConfigurationInformationAddress
+    end
 
     class Src < Sources::Abstract::Src
       include Sources::DumperVersionWriter
@@ -11,11 +25,12 @@ module AssDevel
       attr_reader :info_base
       alias_method :ib, :info_base
 
-      attr_reader :db_cfg_src, :cfg_src
-      def initialize(src_root, owner)
-        super src_root, owner
-        @db_cfg_src = Sources::DbCfgSrc.new(src_root, self)
-        @cfg_src = Sources::CfgSrc.new(src_root, self)
+      attr_reader :db_cfg_src, :cfg_src, :app_spec
+      def initialize(app_spec)
+        super app_spec.src_root
+        @app_spec = app_spec
+        @db_cfg_src = Sources::DbCfgSrc.new(self)
+        @cfg_src = Sources::CfgSrc.new(self)
       end
 
       def dump

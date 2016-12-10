@@ -73,14 +73,8 @@ module AssDevelTest
         .any_instance.expects(:fail_if_repo_not_clear)
       src = mock
       src.responds_like AssDevel::Sources::Abstract::Src
-        .new('src_root', owner_stub)
+        .new('src_root')
       src
-    end
-
-    def owner_stub
-      owner = mock
-      owner.expects(:platform_require).returns(PLATFORM_REQUIRE).at_least_once
-      owner
     end
 
     def inst(**opts)
