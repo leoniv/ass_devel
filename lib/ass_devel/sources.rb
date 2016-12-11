@@ -111,75 +111,7 @@ module AssDevel
         end
       end
 
-      # @api private
-      class CfgSrc < Src
-        include HaveRootFile
-
-        attr_reader :app_src
-        def initialize(app_src)
-          super app_src.src_root
-          @app_src = app_src
-        end
-
-        def self.ROOT_FILE
-          'Configuration.xml'
-        end
-
-        def dumper_version
-          app_src.dumper_version
-        end
-
-        def src_root
-          File.join(app_src.src_root, self.class.DIR)
-        end
-
-        def dump(build)
-          fail 'Src root not exists' unless exists?
-          rm_rf!
-          dump_(build)
-          repo_add_to_index
-        end
-
-        def dump_(_build)
-          fail 'Abstract method call'
-        end
-
-        def init_src
-          fail 'Src exists' if exists?
-          TmpInfoBase.make_rm platform_require: platform_require do |ib|
-            FileUtils.mkdir_p src_root
-            app_src.write_dumper_version(ib.thick.version)
-            ib.cfg.dump_xml(src_root)
-          end
-          repo_add_to_index
-        end
-      end
-
       class ExternalObject < Src ; end
-    end
-
-    # @api private
-    class DbCfgSrc < Abstract::CfgSrc
-      def self.DIR
-        'db_cfg.src'
-      end
-
-      def dump_(build)
-        build.info_base.db_cfg.dump_xml src_root
-      end
-      private :dump_
-    end
-
-    class CfgSrc < Abstract::CfgSrc
-      def self.DIR
-        'cfg.src'
-      end
-
-      # @api private
-      def dump_(build)
-        build.info_base.cfg.dump_xml src_root
-      end
-      private :dump_
     end
   end
 end

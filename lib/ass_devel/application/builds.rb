@@ -21,12 +21,12 @@ module AssDevel
         end
 
         def dump_src
-          fail 'InfoBase not built' unless built?
-          src.dump(info_base)
+          fail 'It not built' unless built?
+          src.dump(self)
         end
       end
 
-      class FileApp < Builds::Abstract::FileBuild
+      class FileApp < AssDevel::Builds::Abstract::FileBuild
         include AppBuild
         EXT = 'ib'
         DEF_DIR = './application.builds'
@@ -47,7 +47,7 @@ module AssDevel
         end
 
         def built?
-          info_base && info_base.exists?
+          !info_base.nil? && info_base.exists?
         end
 
         def conn_str
@@ -56,7 +56,7 @@ module AssDevel
         private :conn_str
       end
 
-      class SrvApp < Builds::Abstract::Build
+      class SrvApp < AssDevel::Builds::Abstract::Build
         include AppBuild
         def build_
           return self if built?
@@ -65,13 +65,13 @@ module AssDevel
         end
       end
 
-      class CfFile < Builds::Abstract::FileBuild
+      class CfFile < AssDevel::Builds::Abstract::FileBuild
         def build_
           fail NotImplemetedError
         end
       end
 
-      class CfuFile < Builds::Abstract::FileBuild
+      class CfuFile < AssDevel::Builds::Abstract::FileBuild
         def build_
           fail NotImplemetedError
         end

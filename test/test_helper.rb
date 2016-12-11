@@ -20,4 +20,8 @@ module AssDevelTest
     IB_XML_SRC = File.join PATH, 'ib_xml_src'
     fail unless File.directory? IB_XML_SRC
   end
+
+  module Tmp
+    BUILD_DIR = File.join Dir.tmpdir, self.name.gsub('::','_')
+  end
 end
