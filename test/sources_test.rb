@@ -1,15 +1,6 @@
 require 'test_helper'
 
 module AssDevelTest
-  module AssertItAbstract
-    def assert_it_abstract(method, *args)
-      e = proc {
-        inst_stub.send(method, *args)
-      }.must_raise RuntimeError
-      e.message.must_match %r{abstract method}i
-    end
-  end
-
   describe AssDevel::Sources::HaveRootFile do
     include desc
     def self.ROOT_FILE
@@ -90,11 +81,11 @@ module AssDevelTest
     end
 
     it '#dumper_version' do
-      assert_it_abstract :dumper_version
+      assert_it_abstract inst_stub, :dumper_version
     end
 
     it '#dump' do
-      assert_it_abstract :dump
+      assert_it_abstract inst_stub, :dump
     end
 
     it '#exists?' do
@@ -189,7 +180,7 @@ module AssDevelTest
     end
 
     it '#init_src' do
-      assert_it_abstract :init_src
+      assert_it_abstract inst_stub, :init_src
     end
   end
 
@@ -235,7 +226,7 @@ module AssDevelTest
     end
 
     it '#dump_' do
-      assert_it_abstract :dump_
+      assert_it_abstract inst_stub, :dump_
     end
 
     it '#dump' do

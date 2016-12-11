@@ -13,6 +13,7 @@ module AssDevel
   require 'ass_devel/support'
   require 'ass_devel/info_base'
   require 'ass_devel/sources'
+  require 'ass_devel/builds'
   require 'ass_devel/cycles'
   require 'ass_devel/application'
   require 'ass_devel/externals'

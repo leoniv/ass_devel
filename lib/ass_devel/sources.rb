@@ -27,6 +27,14 @@ module AssDevel
       end
     end
 
+    module Builded
+      def make_build(build)
+        @build = build.build(self, spec)
+      end
+
+      attr_reader :build
+    end
+
     module Abstract
       # @abstract
       class Src
@@ -103,6 +111,7 @@ module AssDevel
         end
       end
 
+      # @api private
       class CfgSrc < Src
         include HaveRootFile
 
@@ -124,19 +133,14 @@ module AssDevel
           File.join(app_src.src_root, self.class.DIR)
         end
 
-        def info_base
-          app_src.info_base
-        end
-        alias_method :ib, :info_base
-
-        def dump
+        def dump(build)
           fail 'Src root not exists' unless exists?
           rm_rf!
-          dump_
+          dump_(build)
           repo_add_to_index
         end
 
-        def dump_
+        def dump_(_build)
           fail 'Abstract method call'
         end
 
@@ -154,13 +158,14 @@ module AssDevel
       class ExternalObject < Src ; end
     end
 
+    # @api private
     class DbCfgSrc < Abstract::CfgSrc
       def self.DIR
         'db_cfg.src'
       end
 
-      def dump_
-        info_base.db_cfg.dump_xml src_root
+      def dump_(build)
+        build.info_base.db_cfg.dump_xml src_root
       end
       private :dump_
     end
@@ -170,8 +175,9 @@ module AssDevel
         'cfg.src'
       end
 
-      def dump_
-        info_base.cfg.dump_xml src_root
+      # @api private
+      def dump_(build)
+        build.info_base.cfg.dump_xml src_root
       end
       private :dump_
     end
