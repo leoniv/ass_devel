@@ -97,7 +97,7 @@ module AssDevel
         def repo_blobs
           repo_ls_tree.split("\n").each_with_object(Hash.new '') do |line, obj|
             line =~ %r{\A(\S+)\s+(\S+)\s+(?<sha>\S+)\s+(?<file>.*\z)}
-            obj[sha] = file
+            obj[Regexp.last_match[:sha]] = Regexp.last_match[:file]
           end
         end
 
