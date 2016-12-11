@@ -125,11 +125,11 @@ module AssDevel
       end
 
       def src_diff
-        Diffy::Diff.new(db_cfg_src.repo_ls_tree, cfg_src.repo_ls_tree)
+        fail NotImplementedError
       end
 
       def src_diff?
-        db_cfg_src.repo_ls_tree != cfg_src.repo_ls_tree
+        db_cfg_src.repo_shas != cfg_src.repo_shas
       end
     end
 

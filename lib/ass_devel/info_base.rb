@@ -88,7 +88,7 @@ module AssDevel
 
     def src_diff?
       return false if cfg_src.nil?
-      db_cfg_src.repo_ls_tree != cfg_src.repo_ls_tree
+      db_cfg_src.repo_shas != cfg_src.repo_shas
     end
 
     def load_cfg_src

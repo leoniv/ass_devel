@@ -1,7 +1,6 @@
 module AssDevel
   module Sources
     require 'fileutils'
-    require 'diffy'
 
     # Mixin for reade and write dumper version
     module DumperVersionWriter
@@ -93,6 +92,17 @@ module AssDevel
 
         def repo_ls_tree
           handle_shell "git ls-tree -r HEAD #{src_root}"
+        end
+
+        def repo_blobs
+          repo_ls_tree.split("\n").each_with_object(Hash.new '') do |line, obj|
+            line =~ %r{\A(\S+)\s+(\S+)\s+(?<sha>\S+)\s+(?<file>.*\z)}
+            obj[sha] = file
+          end
+        end
+
+        def repo_shas
+          repo_blobs.keys.sort
         end
 
         def rm_rf!
