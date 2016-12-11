@@ -1,11 +1,10 @@
 module AssDevel
   module Cycles
-    module App
+    module Application
       # @abstract
       class Abstract
         include Support::Logger
         attr_accessor :fixturies, :before_run, :after_run
-        attr_writer :build_dir
         attr_reader :app_spec, :options
         def initialize(app_spec, **options)
           @app_spec = app_spec
@@ -23,24 +22,30 @@ module AssDevel
           fail 'Abstract method class'
         end
         private :run_cycle
-
-        def build_dir
-          @build_dir || './builds'
-        end
-
-        def build_name
-          fail 'Abstract method call'
-        end
       end
 
       class Design < Abstract
+        attr_accessor :build_dir
+
         def src
           app_spec.src
         end
 
+        def make_build
+          src.make_build build
+        end
+
+        def build
+          @build ||= AssDevel::Application::Builds::FileApp
+            .new(:design, build_dir, **build_app_opts)
+        end
+
         def run_cycle
+          console "Build src: #{src.src_root}"
+          make_build
+          console "Connection srtring: '#{info_base.connection_string}'"
           open_designer
-          src.dump
+          build.dump_src
         end
 
         def console(m)
@@ -48,14 +53,12 @@ module AssDevel
         end
 
         def open_designer
-          console "Build src: #{src.path}"
-          console "Connection srtring: '#{info_base.connection_string}'"
           console "Wait while designer open ..."
           info_base.designer.run.wait.result.verify!
         end
 
         def info_base
-          @info_base ||= src.build_file_app(build_dir, **build_app_opts)
+          build.info_base
         end
 
         def build_app_opts

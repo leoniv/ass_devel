@@ -22,7 +22,7 @@ module AssDevel
 
         def dump_src
           fail 'It not built' unless built?
-          src.dump(self)
+          src.dump
         end
       end
 

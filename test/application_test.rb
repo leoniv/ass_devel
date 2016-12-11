@@ -185,33 +185,38 @@ module AssDevelTest
       inst_stub.init_src.must_equal :ok
     end
 
+    it 'include Builded' do
+      AssDevel::Application::Src.include? AssDevel::Sources::Builded
+    end
+
     it '#dump' do
       seq = sequence('dump')
       build = mock
       build.responds_like AssDevel::Application::Builds::FileApp.new
-      build.expects(:src).returns(inst_stub(mock, mock))
       build.expects(:platform_version).returns(:version)
-      inst_stub(mock, mock).expects(:repo_clear?).returns(true)
+
+      inst_stub(mock, mock).expects(:build).returns(build).at_least_once
+
+      inst_stub.expects(:repo_clear?).returns(true)
       inst_stub.expects(:write_dumper_version).in_sequence(seq).with(:version)
       inst_stub.cfg_src.expects(:dump).with(build).in_sequence(seq)
       inst_stub.db_cfg_src.expects(:dump).with(build).in_sequence(seq)
       inst_stub.expects(:repo_add_to_index).in_sequence(seq).returns(:ok)
-      inst_stub.dump(build).must_equal :ok
+      inst_stub.dump.must_equal :ok
     end
 
     it '#dump fail if not clear' do
       inst_stub.expects(:repo_clear?).returns(false)
       e = proc {
-        inst_stub.dump(nil)
+        inst_stub.dump
       }.must_raise RuntimeError
       e.message.must_equal 'Repo not clear'
     end
 
     it '#dump fail if invalid build' do
-      build = mock src: 'other src'
       inst_stub.expects(:repo_clear?).returns(true)
       e = proc {
-        inst_stub.dump(build)
+        inst_stub.dump
       }.must_raise RuntimeError
       e.message.must_equal 'Invalid build'
     end
@@ -328,7 +333,7 @@ module AssDevelTest
     it '#dump_src' do
       src = mock
       src.responds_like app_src_stub
-      src.expects(:dump).with(inst).returns(:ok)
+      src.expects(:dump).returns(:ok)
       inst.expects(:built?).returns(true)
       inst.expects(:src).returns(src)
       inst.dump_src.must_equal :ok

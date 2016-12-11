@@ -104,9 +104,9 @@ module AssDevel
         @cfg_src = CfgSrc.new(self)
       end
 
-      def dump(build)
+      def dump
         fail_if_repo_not_clear
-        fail 'Invalid build' if build.src != self
+        fail 'Invalid build' unless build
         write_dumper_version build.platform_version
         cfg_src.dump(build)
         db_cfg_src.dump(build)
