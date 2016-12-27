@@ -23,7 +23,7 @@ module AssDevel
       def make_app_build
         work_cycle.make_build
         ENV["#{app_name}_UNDER_TEST"] = app_connection_string
-        ENV["#{app_name}_LATFORM_REQUIRE"] = app_platform_require
+        ENV["#{app_name}_PLATFORM_REQUIRE"] = app_platform_require
       end
 
       def run_code
