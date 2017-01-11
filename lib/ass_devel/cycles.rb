@@ -140,7 +140,7 @@ module AssDevel
           begin
             ext = info_base.ole(:external)
             ext.__open__ info_base.connection_string
-            result = ext.Version
+            result = ext.Metadata.Version
           ensure
             ext.__close__ if ext
           end
