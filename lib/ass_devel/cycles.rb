@@ -72,14 +72,63 @@ module AssDevel
       class Testing < Abstract; end
 
       class Release < Design
+        class RelfileUploder
+          REL_FILE_NAME = '1Cv8.cf'
+          attr_reader :cycle, :version, :base_path, :flatten
+          def initialize(cycle, version, base_path, flatten = false)
+            @cycle = cycle
+            @version = Gem::Version.new(version)
+            @base_path = base_path
+            @flatten = flatten
+          end
+
+          def tag
+            cycle.class.version_tag(version.to_s)
+          end
+
+          def version_exist?
+            cycle.class.versions.include? version
+          end
+
+          def upload
+            fail "Rel #{tag} not exists" unless version_exist?
+            sh("git show #{tag}:#{src_cf_file} > #{dest_cf_file}")
+          end
+
+          def src_cf_file
+            cycle.cf_file
+          end
+
+          def dest_cf_file
+            FileUtils.mkdir_p(File.dirname(dest_path()))
+          end
+
+          def dest_path
+            File.join(base_path, fname)
+          end
+
+          def fname
+            return "#{cycle.app_spec.name}.#{version}.cf" if flatten
+            File.join(cycle.app_spec.name, version.to_s, REL_FILE_NAME)
+          end
+
+          def sh(cmd)
+            cycle.handle_shell(cmd)
+          end
+        end
+
         TAG_PREFIX = 'v'
-        REL_FILE_NAME = '1Cv8.cf'
+        REL_FILE_NAME = '1Cv8.cf.distrib'
         class DifferentConfigError < StandardError; end
         class DifferentVersionError < StandardError; end
         class CheckConfigError < StandardError; end
 
         def release_dir
           app_spec.release_dir || fail('Release dir require')
+        end
+
+        def upload_release(version, base_path, flatten = false)
+          RelfileUploder.new(self, version, base_path, flatten).upload
         end
 
         def run_cycle
