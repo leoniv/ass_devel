@@ -116,7 +116,7 @@ module AssDevel
         end
 
         def check_cf_diff
-          fail DifferentConfigError, 'Cfg and DbCfg are different' if app_src.src_diff?
+          fail DifferentConfigError, 'Cfg and DbCfg are different' if src.src_diff?
         end
 
         def check_spec
