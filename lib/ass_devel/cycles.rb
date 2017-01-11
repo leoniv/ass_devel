@@ -114,7 +114,7 @@ module AssDevel
           end
 
           def sh(cmd)
-            cycle.handle_shell(cmd)
+            cycle.class.handle_shell(cmd)
           end
         end
 
