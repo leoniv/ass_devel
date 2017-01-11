@@ -180,6 +180,12 @@ module AssDevel
           "#{TAG_PREFIX}#{version}"
         end
 
+        def self.versions
+          version_tags.map do |str|
+            str.gsub(%r{^#{TAG_PREFIX}},'')
+          end.map {|str| Gem::Version.new(str)}.sort
+        end
+
         def self.version_tags
           handle_shell('git tag').split("\n")
             .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+\.\d+\z}}
