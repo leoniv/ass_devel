@@ -101,7 +101,8 @@ module AssDevel
           end
 
           def dest_cf_file
-            FileUtils.mkdir_p(File.dirname(dest_path()))
+            FileUtils.mkdir_p(File.dirname(dest_path))
+            dest_path
           end
 
           def dest_path
