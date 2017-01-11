@@ -261,6 +261,7 @@ module AssDevel
         end
 
         def commit_cf(cf)
+          handle_shell "git add \"#{cf}\""
           handle_shell "git commit -i \"#{cf}\" -m \"Release #{version_tag}\""
         end
 
