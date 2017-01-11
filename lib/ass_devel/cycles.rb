@@ -72,6 +72,7 @@ module AssDevel
       class Testing < Abstract; end
 
       class Release < Design
+        # @api private
         class RelfileUploder
           REL_FILE_NAME = '1Cv8.cf'
           attr_reader :cycle, :version, :base_path, :flatten
@@ -122,6 +123,32 @@ module AssDevel
         class DifferentConfigError < StandardError; end
         class DifferentVersionError < StandardError; end
         class CheckConfigError < StandardError; end
+
+        def self.version_tag(version)
+          "#{TAG_PREFIX}#{version}"
+        end
+
+        def self.versions
+          version_tags.map do |str|
+            str.gsub(%r{^#{TAG_PREFIX}},'')
+          end.map {|str| Gem::Version.new(str)}.sort
+        end
+
+        def self.version_tags
+          handle_shell('git tag').split("\n")
+            .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+\.\d+\z}}
+        end
+
+        # TODO: extract shell
+        def self.handle_shell(cmd)
+          out = `#{cmd} 2>&1`.strip
+          fail out unless $?.success?
+          out
+        end
+
+        def cf_file
+          File.join(release_dir, REL_FILE_NAME)
+        end
 
         def release_dir
           app_spec.release_dir || fail('Release dir require')
@@ -231,21 +258,6 @@ module AssDevel
           self.class.version_tag(app_version)
         end
 
-        def self.version_tag(version)
-          "#{TAG_PREFIX}#{version}"
-        end
-
-        def self.versions
-          version_tags.map do |str|
-            str.gsub(%r{^#{TAG_PREFIX}},'')
-          end.map {|str| Gem::Version.new(str)}.sort
-        end
-
-        def self.version_tags
-          handle_shell('git tag').split("\n")
-            .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+\.\d+\z}}
-        end
-
         def tag_version
           handle_shell "git tag -m \"Version #{app_version}\" #{version_tag}"
         end
@@ -254,10 +266,6 @@ module AssDevel
           return false unless\
             self.class.version_tags.include?(version_tag)
           true
-        end
-
-        def cf_file
-          File.join(release_dir, REL_FILE_NAME)
         end
 
         def commit_cf(cf)
@@ -297,13 +305,6 @@ module AssDevel
           end
           cmd.run.wait.result.verify!
           cf_file_
-        end
-
-        # TODO: extract shell
-        def self.handle_shell(cmd)
-          out = `#{cmd} 2>&1`.strip
-          fail out unless $?.success?
-          out
         end
 
         def handle_shell(cmd)
