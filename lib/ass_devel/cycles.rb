@@ -110,7 +110,7 @@ module AssDevel
 
           def fname
             return "#{cycle.app_spec.name}.#{version}.cf" if flatten
-            File.join(cycle.app_spec.name, version.to_s, REL_FILE_NAME)
+            File.join(cycle.app_spec.name.to_s, version.to_s, REL_FILE_NAME)
           end
 
           def sh(cmd)
