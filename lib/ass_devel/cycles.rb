@@ -97,7 +97,7 @@ module AssDevel
           end
 
           def src_cf_file
-            cycle.cf_file
+            sh "git ls-tree --full-name --name-only #{tag} #{cycle.cf_file}"
           end
 
           def dest_cf_file
