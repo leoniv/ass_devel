@@ -217,13 +217,23 @@ module AssDevel
 
         def release
           fail "Tag #{version_tag} exists" if tag_exist?
-          console "Make tag `#{version_tag}'"
           build_cf
-          tag_version
+          make_tag
           console "TODO: manually push commits and tags"
         end
 
+        def make_tag
+          console "Make tag `#{version_tag}'"
+          tag_version
+        end
+
+        def check_rel_dir
+          fail "#{release_dir} not exists or it doesn't directory" unless\
+            File.directory?(release_dir)
+        end
+
         def build_cf
+          check_rel_dir
           console "Build disribuition .cf file`#{version_tag}'"
           commit_cf make_cf
         end
@@ -232,7 +242,7 @@ module AssDevel
           cf_file_ = cf_file
           cmd = info_base.designer do
             createDistributionFiles do
-              cfFie cf_file_
+              cfFile cf_file_
             end
           end
           cmd.run.wait.result.verify!
