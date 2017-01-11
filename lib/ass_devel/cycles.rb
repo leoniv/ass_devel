@@ -241,7 +241,7 @@ module AssDevel
         end
 
         def handle_shell(cmd)
-          self.class.handle_shell
+          self.class.handle_shell(cmd)
         end
 
         def repo_clear?
