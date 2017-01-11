@@ -2,11 +2,12 @@ module AssDevel
   module Application
     # @todo it's stub
     class Specification
-      attr_accessor :name, :platform_require, :src_root
+      attr_accessor :name, :platform_require, :src_root, :release_dir
 
       def src
         @src ||= Src.new(self)
       end
+
       attr_accessor :Name
       alias_method :name, :Name
       alias_method :name=, :Name=
