@@ -234,10 +234,14 @@ module AssDevel
         end
 
         # TODO: extract shell
-        def handle_shell(cmd)
+        def self.handle_shell(cmd)
           out = `#{cmd} 2>&1`.strip
           fail out unless $?.success?
           out
+        end
+
+        def handle_shell(cmd)
+          self.class.handle_shell
         end
 
         def repo_clear?
