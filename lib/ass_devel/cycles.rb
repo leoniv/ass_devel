@@ -94,8 +94,14 @@ module AssDevel
         end
 
         def rebuild
-          info_base.rm! :yes
+          info_base.rm! :yes if built?
           make_build
+        end
+
+        def built?
+          build.spec = app_spec
+          build.src = src
+          build.built?
         end
 
         def build
