@@ -14,7 +14,7 @@ module AssDevel
 
       def make_app_build
         cs, pr = work_cycle.make_test_build
-        ENV["#{app_name}_UNDER_TEST"] = cs
+        ENV["#{app_name}_UNDER_TEST"] = cs.to_s
         ENV["#{app_name}_PLATFORM_REQUIRE"] = "= #{pv}"
       end
 
