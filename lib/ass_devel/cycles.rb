@@ -45,8 +45,13 @@ module AssDevel
         def run_cycle
           rebuild
           open_designer
-          build.dump_src
+          dump_src
           clean_up
+        end
+
+        def dump_src
+          console "Dump src: #{src.src_root}"
+          build.dump_src
         end
 
         def clean_up
