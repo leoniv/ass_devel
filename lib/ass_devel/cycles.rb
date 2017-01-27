@@ -46,6 +46,7 @@ module AssDevel
           console "Connection srtring: '#{info_base.connection_string}'"
           open_designer
           build.dump_src
+          info_base.rm! :yes
         end
 
         def rebuild
