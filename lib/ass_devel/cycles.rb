@@ -42,10 +42,21 @@ module AssDevel
 
         def run_cycle
           console "Build src: #{src.src_root}"
-          make_build
+          rebuild
           console "Connection srtring: '#{info_base.connection_string}'"
           open_designer
           build.dump_src
+        end
+
+        def rebuild
+          info_base.rm! :yes if built?
+          make_build
+        end
+
+        def built?
+          build.spec = app_spec
+          build.src = src
+          build.built?
         end
 
         def console(m)
@@ -168,17 +179,6 @@ module AssDevel
           check_spec
           check_config
           release
-        end
-
-        def rebuild
-          info_base.rm! :yes if built?
-          make_build
-        end
-
-        def built?
-          build.spec = app_spec
-          build.src = src
-          build.built?
         end
 
         def build
