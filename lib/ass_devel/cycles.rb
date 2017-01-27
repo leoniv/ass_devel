@@ -26,6 +26,8 @@ module AssDevel
 
       class Design < Abstract
         attr_accessor :build_dir
+        attr_accessor :bkup_data
+        attr_accessor :bkup_path
 
         def src
           app_spec.src
@@ -41,17 +43,32 @@ module AssDevel
         end
 
         def run_cycle
-          console "Build src: #{src.src_root}"
           rebuild
-          console "Connection srtring: '#{info_base.connection_string}'"
           open_designer
           build.dump_src
-          info_base.rm! :yes
+          clean_up
         end
 
+        def clean_up
+          if bkup_data
+            console "Backup build to: #{info_base.send(:bkup_file, bkup_path)}"
+            info_base.bkup_data bkup_path if bkup_data
+          end
+          rm_build
+         end
+
         def rebuild
-          info_base.rm! :yes if built?
+          rm_build
+          console "Build src: #{src.src_root}"
           make_build
+          console "Build connection srtring: '#{info_base.connection_string}'"
+        end
+
+        def rm_build
+          if built?
+            console "Remove existing build: #{info_base.connection_string}"
+            info_base.rm! :yes if built?
+          end
         end
 
         def built?
@@ -173,9 +190,7 @@ module AssDevel
 
         def run_cycle
           guard_clear
-          console "Build src: #{src.src_root}"
           rebuild
-          console "Connection srtring: '#{info_base.connection_string}'"
           check_cf_diff
           check_spec
           check_config
