@@ -29,6 +29,11 @@ module AssDevel
         attr_accessor :bkup_data
         attr_accessor :bkup_path
 
+        def make_test_build
+          make_build
+          [info_base.connection_string, build.platform_version]
+        end
+
         def src
           app_spec.src
         end
