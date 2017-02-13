@@ -59,6 +59,10 @@ module AssDevel
             fail 'Abstract method call'
           end
 
+          def platform_require
+            app_src.platform_require
+          end
+
           def init_src
             fail 'Src exists' if exists?
             TmpInfoBase.make_rm platform_require: platform_require do |ib|
@@ -103,6 +107,10 @@ module AssDevel
         @app_spec = app_spec
         @db_cfg_src = DbCfgSrc.new(self)
         @cfg_src = CfgSrc.new(self)
+      end
+
+      def platform_require
+        app_spec.platform_require
       end
 
       def dump
