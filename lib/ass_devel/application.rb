@@ -102,11 +102,11 @@ module AssDevel
 
       attr_reader :db_cfg_src, :cfg_src, :app_spec
       alias_method :spec, :app_spec
-      def initialize(app_spec)
+      def initialize(app_spec, db_cfg_class = nil, cfg_class = nil)
         super app_spec.src_root
         @app_spec = app_spec
-        @db_cfg_src = DbCfgSrc.new(self)
-        @cfg_src = CfgSrc.new(self)
+        @db_cfg_src = (db_cfg_class || DbCfgSrc).new(self)
+        @cfg_src = (cfg_class || CfgSrc).new(self)
       end
 
       def platform_require
