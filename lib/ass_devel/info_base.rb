@@ -93,7 +93,7 @@ module AssDevel
 
     def load_cfg_src
       fail_if_src_not_exists(cfg_src)
-      return cfg.load if File.file? cfg_src.src_root
+      return cfg.load cfg_src.src_root if File.file? cfg_src.src_root
       cfg.load_xml(cfg_src.src_root)
     end
     private :load_cfg_src
