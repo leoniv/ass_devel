@@ -683,10 +683,8 @@ module AssDevel
       private :testing_helper_module
     end
 
-    # Provades helpers for filling infobase of testing datata
+    # Provades helpers {Fixtures} for filling infobase of testing datata,
     # {Proxy} converts values beetween client and server
-    # All fixtures may by remove from infobase for tests isolate
-    # etc
     # @todo require documented but unly example for memory
     #
     # @example
@@ -780,6 +778,8 @@ module AssDevel
         Proxy.new(srv_runtime, real_runtime)
       end
 
+      # Object for filling/remove test data to/from infobase
+      # Also it provides access to created objects
       class Fixtures
         # @api private
         # Registers RecordSet eraser
@@ -1113,6 +1113,7 @@ module AssDevel
         Fixtures.new(proxy(srv_runtime, real_runtime))
       end
 
+      # @api public
       module DSL
         def define_fixtures(srv_runtime)
           fail "#{srv_runtime} must be runned" unless srv_runtime.runned?
