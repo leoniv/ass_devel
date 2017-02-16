@@ -462,17 +462,16 @@ module AssDevel
         init
       end
 
-      # @todo rename AutoFixtures to ?
       # @example
-      #  include MetaData::AutoFixtures
+      #  include MetaData::ObjectFactory
       #
-      #  ref = auto_fixtures.Catalogs.CtalogName.ref Attr1: 'Value' do |item|
+      #  ref = object_factory.Catalogs.CtalogName.ref Attr1: 'Value' do |item|
       #    item.Attr2 = 'Value2'
       #    item[:TabularSection].add Attr1: 'Value' do |tab_item|
       #      tab_item.Attr2 = 'Value2
       #    end
       #  end
-      module AutoFixtures
+      module ObjectFactory
         module ObjectBuilder
           class ObjectWrapper
             class TabularSection
@@ -578,7 +577,7 @@ module AssDevel
           end
         end
 
-        class FixtureFactory
+        class Dispatcher
           VALID_RUNTIMES = [:external, :thick]
 
           attr_reader :ole_runtime
@@ -629,8 +628,8 @@ module AssDevel
           end
         end
 
-        def auto_fixtures
-          MetaData::AutoFixtures::FixtureFactory.new ole_runtime_get
+        def object_factory
+          MetaData::ObjectFactory::Dispatcher.new ole_runtime_get
         end
       end
     end
@@ -695,16 +694,16 @@ module AssDevel
     #    extend TestingHelpers::RuntimesBridge::DSL
     #
     #    def preapare_fixt
-    #      fixt_let(:company1, :ref_delete) do |af, fixt|
-    #        af.Catalogs.Companies.ref do |ref|
+    #      fixt_let(:company1, :ref_delete) do |factory, fixtures|
+    #        factory.Catalogs.Companies.ref do |ref|
     #          ref.Description = 'company1'
     #        end
     #      end
     #
-    #      fixt_let(:company2, :ref_delete) do |af, fixt|
-    #        af.Catalogs.Companies.ref do |ref|
+    #      fixt_let(:company2, :ref_delete) do |factory, fixtures|
+    #        factory.Catalogs.Companies.ref do |ref|
     #          ref.Description = 'company2'
-    #          ref.Holder = fixt.company1
+    #          ref.Holder = fixtures.company1
     #        end
     #      end
     #    end
@@ -894,10 +893,10 @@ module AssDevel
           nop: ->(obj, ole_runtime) {}
         }
 
-        attr_reader :proxy, :auto_fixtures
+        attr_reader :proxy, :object_factory
         def initialize(proxy)
           @proxy = proxy
-          @auto_fixtures = MetaData::AutoFixtures::FixtureFactory.new\
+          @object_factory = MetaData::ObjectFactory::Dispatcher.new\
             proxy.srv_runtime.ole_runtime_get
         end
 
@@ -911,7 +910,7 @@ module AssDevel
 
         def yields(name, &block)
           @yields = true
-          srv_values[name] = yield auto_fixtures, self
+          srv_values[name] = yield object_factory, self
         ensure
           @yields = false
         end
@@ -947,8 +946,8 @@ module AssDevel
         #
         # @example
         #   # Builds new fixture with defaults +teardown_do+ proc
-        #   fixtures.let :foo_ref, :ref_delete do |af|
-        #     af.Catalogs.Foo.ref do |item|
+        #   fixtures.let :foo_ref, :ref_delete do |factory|
+        #     factory.Catalogs.Foo.ref do |item|
         #       item.Description = 'Foo name'
         #     end
         #   end # => WIN32OLE <:hash>
@@ -957,7 +956,7 @@ module AssDevel
         #
         #   fixtures.teardown_all # => nil
         #
-        # @yield [MetaData::AutoFixtures::FixtureFactory] fixture builder
+        # @yield [MetaData::ObjectFactory::Dispatcher] fixture builder
         # @yield self
         # @return [WIN32OLE] object maked in srv_runtime and converted to
         #   real_runtime WIN32OLE object
