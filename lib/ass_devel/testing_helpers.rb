@@ -170,24 +170,24 @@ module AssDevel
     # Provides dynamically generated mixins-helpers
     # @example
     #
-    # describe 'Tests for Catalogs.CatalogName' do
-    #   like_ole_runtime Runtimes::Ext
-    #   include AssDevel::TestingHelpers::MetaData::Catalogs[:CatalogName]
+    #  describe 'Tests for Catalogs.CatalogName' do
+    #    like_ole_runtime Runtimes::Ext
+    #    include AssDevel::TestingHelpers::MetaData::Catalogs[:CatalogName]
     #
-    #   def catalog_item
-    #     new_item Description: 'Foo' do |obj|
-    #       obj.attr1 = 'bar'
-    #     end
-    #   end
+    #    def catalog_item
+    #      new_item Description: 'Foo' do |obj|
+    #        obj.attr1 = 'bar'
+    #      end
+    #    end
     #
-    #   it 'Item method #foo' do
-    #      catalog_item.foo.must_equal 'foo'
-    #   end
+    #    it 'Item method #foo' do
+    #       catalog_item.foo.must_equal 'foo'
+    #    end
     #
-    #   it 'ManagerModule method #bar' do
-    #     catalog_manager.bar.must_equal 'bar'
-    #   end
-    # end
+    #    it 'ManagerModule method #bar' do
+    #      catalog_manager.bar.must_equal 'bar'
+    #    end
+    #  end
     module MetaData
       module Managers
         # @todo add DocumentManger, TaskManger etc.
@@ -631,6 +631,517 @@ module AssDevel
 
         def auto_fixtures
           MetaData::AutoFixtures::FixtureFactory.new ole_runtime_get
+        end
+      end
+    end
+
+    # Mixin provaide 2 methods
+    # for covert 1C valuses to/from string internal
+    #
+    # 1C method +ValueFromStringInternal+ and +ValueToStringInternal+
+    # defined for server context only.
+    #
+    # For convert values on client require make CommomModule
+    # wich define 2 wrappers for client +value_to_string_internal(obj)+
+    # and +value_from_string_internal(obj)+
+    #
+    # After CommomModule made, define monkey patch of this module
+    # on your +test_helper.rb+ wich owrload method `#testing_helper_module` and
+    # returns suitable module
+    #
+    # @example
+    #  # Monkey patch of #testing_helper_module
+    #  module AssTest
+    #    module TestingHelpers
+    #      module StringInternal
+    #        def testing_helper_module
+    #          cORE_TestHelper
+    #        end
+    #      end
+    #    end
+    #  end
+    #
+    module StringInternal
+      SRV_RUNTIMES = [:thick, :external]
+      def from_string_internal(string)
+        if SRV_RUNTIMES.include? ole_runtime_get.ole_type
+          return valueFromStringInternal string
+        end
+        testing_helper_module.value_from_string_internal(string)
+      end
+
+      def to_string_internal(value)
+        if SRV_RUNTIMES.include? ole_runtime_get.ole_type
+          return valueToStringInternal value
+        end
+        testing_helper_module.value_to_string_internal value
+      end
+
+      # (see StringInternal)
+      def testing_helper_module
+        fail 'Define monkey patch of this method'
+      end
+      private :testing_helper_module
+    end
+
+    # Provades helpers for filling infobase of testing datata
+    # {Proxy} converts values beetween client and server
+    # All fixtures may by remove from infobase for tests isolate
+    # etc
+    # @todo require documented but unly example for memory
+    #
+    # @example
+    #  module MySharedFixture
+    #    extend TestingHelpers::RuntimesBridge::DSL
+    #
+    #    def preapare_fixt
+    #      fixt_let(:company1, :ref_delete) do |af, fixt|
+    #        af.Catalogs.Companies.ref do |ref|
+    #          ref.Description = 'company1'
+    #        end
+    #      end
+    #
+    #      fixt_let(:company2, :ref_delete) do |af, fixt|
+    #        af.Catalogs.Companies.ref do |ref|
+    #          ref.Description = 'company2'
+    #          ref.Holder = fixt.company1
+    #        end
+    #      end
+    #    end
+    #
+    #    def remove_fixt
+    #      fixt_rm_all
+    #    end
+    #  end
+    #
+    #  module TestCase
+    #    describe 'do in external runtime' do
+    #      like_ole_runtime Runtimes::Ext
+    #      include MySharedFixture
+    #      include AssDevel::TestingHelpers::MetaData::Catalogs[:Companies]
+    #      include AssTests::Minitest::Assertion
+    #
+    #      before do
+    #        preapare_fixt
+    #      end
+    #
+    #      after do
+    #        remove_fixt
+    #      end
+    #
+    #      it '#find_by_name' do
+    #        _assert_equal fixtures.company1,
+    #           catalog_manager.find_by_name('company1')
+    #      end
+    #
+    #      it '#holder' do
+    #        _assert_equal fixt_let[:company2], fixtures.company1.holder
+    #      end
+    #    end
+    #  end
+    #
+    #
+    module RuntimesBridge
+      class Proxy
+        require 'date'
+        SIMPLE_TYPES = [String, Fixnum, Float, TrueClass, FalseClass, Time]
+        attr_reader :real_runtime, :srv_runtime
+        def initialize(srv_runtime, real_runtime)
+          @real_runtime = Module.new do
+            like_ole_runtime real_runtime
+            extend StringInternal
+          end
+          @srv_runtime = Module.new do
+            like_ole_runtime srv_runtime
+            extend StringInternal
+          end
+        end
+
+        def to_real(srv_value)
+          return srv_value if SIMPLE_TYPES.include? srv_value.class
+          fail ArgumentError unless srv_value.is_a? WIN32OLE
+          real_runtime.from_string_internal\
+            srv_runtime.to_string_internal(srv_value)
+        end
+
+        def to_srv(real_value)
+          return real_value if SIMPLE_TYPES.include? real_value.class
+          fail ArgumentError unless real_value.is_a? WIN32OLE
+          srv_runtime.from_string_internal\
+            real_runtime.to_string_internal(real_value)
+        end
+
+        def runtimes_equal?
+          real_runtime.send(:ole_runtime_get) ==\
+            srv_runtime.send(:ole_runtime_get)
+        end
+      end
+
+      def self.proxy(srv_runtime, real_runtime)
+        Proxy.new(srv_runtime, real_runtime)
+      end
+
+      class Fixtures
+        # @api private
+        # Registers RecordSet eraser
+        class RegisterRecordSet
+          class Record
+            attr_reader :record_set, :ole_record
+            def initialize(record_set, ole_record)
+              @record_set = record_set
+              @ole_record = ole_record
+            end
+
+            def filter
+              r = {}
+              record_set.full_key.each do |key|
+                r[key] = ole_record.send(key)
+              end
+              r
+            end
+
+            def ole_record_set
+              rs = record_set.register_manager.CreateRecordSet
+              filter.each do |k, v|
+                rs.Filter.send(k).Set(v, true) unless v.nil?
+              end
+              rs
+            end
+
+            def rm
+              ole_record_set.write
+            end
+          end
+
+          REG_COLLECTIONS = [ :InformationRegisters,
+                              :AccountingRegisters,
+                              :AccumulationRegisters,
+                              :CalculationRegisters ]
+
+          attr_reader :ole_rs, :ole_runtime
+          def initialize(ole_runtime, ole_rs)
+            @ole_runtime = ole_runtime
+            @ole_rs = ole_rs
+          end
+
+          def ole_connector
+            ole_runtime.ole_connector
+          end
+
+          def md
+            ole_rs.Metadata
+          end
+
+          def register_manager
+            ole_connector.send(collection).send(md.Name)
+          end
+
+          def collection
+            REG_COLLECTIONS.find do |coll|
+              coll = AssDevel::MetaData::Const::MdCollections.get(coll)
+              md_class?(coll)
+            end
+          end
+
+          def md_class?(coll)
+            coll.md_class.en == md_class || coll.md_class.ru == md_class
+          end
+
+          def md_class
+            md.FullName.split('.')[0].to_sym
+          end
+
+          def record_key
+            @record_key ||= register_manager.CreateRecordKey(structure)
+          end
+
+          def structure
+            ole_connector.newObject('structure')
+          end
+
+          def record_key_fields
+            [:Period, :Recorder, :LineNumber].select do |k|
+              record_key.ole_respond_to? k
+            end
+          end
+
+          def dimensions
+            r = []
+            md.Dimensions.each do |d|
+              r << d.Name.to_sym
+            end
+            r
+          end
+
+          def full_key
+            record_key_fields + dimensions
+          end
+
+          def rm
+            ole_rs.each do |r|
+              Record.new(self, r).rm
+            end
+            ole_rs.Clear
+          end
+        end
+
+        DEF_TEARDOWNS_DO = {
+          ref_delete: ->(ref, ole_runtime) { ref.GetObject.Delete if ref.GetObject },
+          object_delete: ->(obj, ole_runtime) { obj.Delete if obj },
+          record_set_delete: ->(rs, ole_runtime) {
+            RegisterRecordSet.new(ole_runtime, rs).rm
+          },
+          nop: ->(obj, ole_runtime) {}
+        }
+
+        attr_reader :proxy, :auto_fixtures
+        def initialize(proxy)
+          @proxy = proxy
+          @auto_fixtures = MetaData::AutoFixtures::FixtureFactory.new\
+            proxy.srv_runtime.ole_runtime_get
+        end
+
+        def srv_values
+          @srv_values ||= {}
+        end
+
+        def yields?
+          @yields || false
+        end
+
+        def yields(name, &block)
+          @yields = true
+          srv_values[name] = yield auto_fixtures, self
+        ensure
+          @yields = false
+        end
+
+        def fixture_make(name, teardown_do, &block)
+          yields(name, &block)
+          teardowns_set(name, teardown_do)
+          _define_method name
+        end
+        private :fixture_make
+
+        def add(name, teardown_do, &block)
+          fail ArgumentError unless block_given?
+          fail ArgumentError unless name.respond_to? :to_sym
+          fail "Transaction is active" if\
+            proxy.srv_runtime.transactionActive
+          fixture_make(name.to_sym, teardown_do, &block)
+          send(name)
+        end
+        private :add
+
+        def fixture_defined?(name)
+          srv_values.key? name.to_sym
+        end
+
+        # Build fixture object. Define method +name+. Object builds only onse
+        # and returns always they unless {#teardown} not called
+        #
+        # @param name [Symbol] fixture name
+        # @param teardown_do [Proc Symbol] block which destroy fixture
+        #   in to block will be passed srv_runtime object for destroy.
+        #   If +Symbol+ given will be used {DEF_TEARDOWNS_DO} proc
+        #
+        # @example
+        #   # Builds new fixture with defaults +teardown_do+ proc
+        #   fixtures.let :foo_ref, :ref_delete do |af|
+        #     af.Catalogs.Foo.ref do |item|
+        #       item.Description = 'Foo name'
+        #     end
+        #   end # => WIN32OLE <:hash>
+        #
+        #   fixtures.let :foo_ref # => WIN32OLE <:hash>
+        #
+        #   fixtures.teardown_all # => nil
+        #
+        # @yield [MetaData::AutoFixtures::FixtureFactory] fixture builder
+        # @yield self
+        # @return [WIN32OLE] object maked in srv_runtime and converted to
+        #   real_runtime WIN32OLE object
+        def let(name, teardown_do = nil, &block)
+          return send(name) if fixture_defined? name
+          add(name, teardown_do, &block)
+        end
+        alias_method :setup, :let
+
+        def real_value(method)
+          return srv_values[method] if yields?
+          return srv_values[method] if proxy.runtimes_equal?
+          proxy.to_real srv_values[method]
+        end
+        private :real_value
+
+        def teardown(name, &block)
+          return auto_teardown unless block_given?
+          _teardown(name, &block)
+        end
+        alias_method :rm, :teardown
+
+        def teardown_all
+          fail "Auto teardown all fixtures unpossible" unless auto_teardown_all?
+          srv_values.keys.each do |name|
+            auto_teardown name
+          end
+        end
+        alias_method :rm_all, :teardown_all
+
+        def auto_teardown(name)
+          fail ArgumentError, "Teardown fixture `#{name}' not found" unless\
+            teardowns_get name
+          _teardown(name, &teardowns_get(name))
+        end
+        private :auto_teardown
+
+        def _undefine_method(name)
+          singleton_class.send :undef_method, name
+          nil
+        end
+        private :_undefine_method
+
+        def _define_method(name)
+          singleton_class.send :define_method, name do
+            real_value name
+          end
+          nil
+        end
+        private :_define_method
+
+        def fixture_rm(name)
+          _undefine_method(name)
+          srv_values.delete name
+          nil
+        end
+        private :fixture_rm
+
+        def _teardown(name, &block)
+#          fail ArgumentError,
+#            "Fixture `#{name}' not found" unless fixture_defined? name
+          return unless fixture_defined? name
+          yield srv_values[name], proxy.srv_runtime.ole_runtime_get
+          fixture_rm name
+        end
+        private :_teardown
+
+        def teardowns_do
+          @teardowns_do ||= {}
+        end
+        private :teardowns_do
+
+        def teardowns_get(name)
+          teardowns_do[srv_values[name]]
+        end
+        private :teardowns_get
+
+        def teardowns_set(name, teardown_do_)
+          teardown_do = teardown_do_detect(teardown_do_)
+          fail ArgumentError, "teardown_do mast be a Proc" if\
+            !teardown_do.nil? && !teardown_do.is_a?(Proc)
+          if Proxy::SIMPLE_TYPES.include? srv_values[name].class
+            teardowns_do[srv_values[name]] = teardown_do_detect(:nop)
+          else
+            teardowns_do[srv_values[name]] = teardown_do
+          end
+        end
+        private :teardowns_set
+
+        def teardown_do_detect(teardown_do)
+          return DEF_TEARDOWNS_DO.fetch(teardown_do) if teardown_do.is_a? Symbol
+          teardown_do
+        end
+        private :teardown_do_detect
+
+        def auto_teardown_all?
+          teardowns_do.values.compact.size ==\
+            teardowns_do.values.size
+        end
+        private :auto_teardown_all?
+
+        # Helper for remove real runtime objects
+        def rm_real(value, teardown_do = nil, &block)
+          return _rm_real(value, &block) if block_given?
+          fail ArgumentError, "Invalid teardown_do #{teardown_do}" unless\
+            teardown_do_detect(teardown_do).is_a? Proc
+          _rm_real(value, &teardown_do_detect(teardown_do))
+        end
+
+        def _rm_real(value, &block)
+          yield to_srv_value(value)
+        end
+        private :_rm_real
+
+        def to_srv_value(real_value)
+          return real_value if proxy.runtimes_equal?
+          proxy.to_srv real_value
+        end
+
+        def srv_ole_runtime
+          proxy.srv_runtime.ole_runtime_get
+        end
+
+        def at_server_do(caller_, *args, &block)
+          args_ = *args.map {|a| proxy.to_srv a}
+          begin
+            caller_old_runtime = switch_ole_runtime(caller_.class, srv_ole_runtime)
+            fixtures_old_runtime = switch_fixtures_runtime(caller_, srv_ole_runtime)
+            yields_at_serever *args_, &block
+          ensure
+            switch_ole_runtime(caller_.class, caller_old_runtime)
+            switch_fixtures_runtime(caller_, fixtures_old_runtime)
+          end
+        end
+
+        def switch_fixtures_runtime(caller_, new_runtime)
+          switch_ole_runtime caller_.fixtures.proxy.real_runtime, new_runtime
+        end
+
+        def switch_ole_runtime(runtimed, new_runtime)
+          old_runtime = runtimed.ole_runtime_get
+          runtimed.like_ole_runtime new_runtime
+          old_runtime
+        end
+        private :switch_ole_runtime
+
+        def yields_at_serever(*args, &block)
+          yield *args
+        end
+        private :yields_at_serever
+      end
+
+      def self.fixtures(srv_runtime, real_runtime)
+        Fixtures.new(proxy(srv_runtime, real_runtime))
+      end
+
+      module DSL
+        def define_fixtures(srv_runtime)
+          fail "#{srv_runtime} must be runned" unless srv_runtime.runned?
+
+          define_method :fixtures do
+            @fixtures ||= TestingHelpers::RuntimesBridge
+              .fixtures(srv_runtime, ole_runtime_get)
+          end
+
+          define_method :fixt_let do |name, teardown_do = nil, &block|
+            fixtures.let(name, teardown_do, &block)
+          end
+
+          define_method :fixt_rm do |name, &block|
+            fixtures.rm(name, &block)
+          end
+
+          define_method :fixt_rm_all do
+            fixtures.rm_all
+          end
+
+          define_method :fixt_rm_real do |real_value, teardown_do = nil, &block|
+            fixtures.rm_real real_value, teardown_do, &block
+          end
+
+          define_method :at_server do |*args, &block|
+            fixtures.at_server_do self, *args, &block
+          end
         end
       end
     end
