@@ -443,6 +443,11 @@ module AssDevel
         Commands
         Templates}
 
+        def self.get_by_full_name(full_name)
+          split = full_name.split('.')
+          get(split[split.size - 2])
+        end
+
         module DevHelper
           def snippet_add_property
             undefined_properties.map do |en|

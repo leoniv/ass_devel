@@ -172,7 +172,7 @@ module AssDevel
     #
     #  describe 'Tests for Catalogs.CatalogName' do
     #    like_ole_runtime Runtimes::Ext
-    #    include AssDevel::TestingHelpers::MetaData::Catalogs[:CatalogName]
+    #    include AssDevel::TestingHelpers::MetaData::Managers::Catalogs[:CatalogName]
     #
     #    def catalog_item
     #      new_item Description: 'Foo' do |obj|
