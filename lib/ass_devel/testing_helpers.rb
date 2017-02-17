@@ -340,6 +340,19 @@ module AssDevel
             alias_method :make_folder, :make_group
           end
 
+          module DocumentManger
+            include AbstractObjectManager
+
+            def _new_object_method
+              :CreateDocument
+            end
+
+            alias_method :document_manager, :objects_manager
+            alias_method :document_metadata, :object_metadata
+            alias_method :new_doc, :new_object
+            alias_method :make_doc, :make_object
+          end
+
           module ConstantManager
             def md_collection
               :Constants
@@ -607,6 +620,7 @@ module AssDevel
           def mixin_get(manager_name)
             case manager_name
             when :Catalogs then GroupedObjectBuilder
+            when :Documents then ObjectBuilder
               # TODO: when ...
             when :InformationRegisters then RegisterBuilder
               # TODO: when ...
@@ -689,7 +703,8 @@ module AssDevel
     #
     # @example
     #  module MySharedFixture
-    #    extend TestingHelpers::RuntimesBridge::DSL
+    #    extend AssDevel::TestingHelpers::RuntimesBridge::DSL
+    #    define_fixtures Runtimes::Ext
     #
     #    def preapare_fixt
     #      fixt_let(:company1, :ref_delete) do |factory, fixtures|
