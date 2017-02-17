@@ -343,6 +343,10 @@ module AssDevel
           module DocumentManger
             include AbstractObjectManager
 
+            def md_collection
+              :Documents
+            end
+
             def _new_object_method
               :CreateDocument
             end
