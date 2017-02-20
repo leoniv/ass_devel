@@ -586,8 +586,8 @@ module AssDevel
           def find(*args, **attributes, &block)
             arr = find_objects(*args, **attributes, &block)
             fail "Too many objects found #{args}, #{attributes}" if\
-              arr.is_a? Array && arr.size > 1
-              return arr[0] if arr.is_a? Array
+              arr.is_a?(Array) && arr.size > 1
+              return arr[0] if arr.is_a?(Array)
               arr
           end
         end
