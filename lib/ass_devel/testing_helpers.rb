@@ -193,6 +193,7 @@ module AssDevel
         # @todo add DocumentManger, TaskManger etc.
         module Abstract
           module AbstractObjectManager
+            include AssOle::Snippets::Shared::Query
             # Symbol like a :Catalogs, :Constants
             def md_collection
               fail 'Abstract method call'
@@ -251,6 +252,28 @@ module AssDevel
               obj.Write()
             end
             private :_write
+
+            def find_objects(*args, **options, &block)
+              fail 'Abstract method call'
+            end
+
+            def qtext_condition_(**options)
+              qtext = ''
+              options.keys.each do |key|
+                qtext << "and ref.#{key} = &#{key}\n"
+              end
+              qtext.gsub!(/^and/,'')
+            end
+            private :qtext_condition_
+
+            def ole_to_arr_(ole_arr)
+              r = []
+              ole_arr.each do |i|
+                r << i
+              end
+              r
+            end
+            private :ole_to_arr_
           end
 
           module AbstractGroupedObject
@@ -338,6 +361,19 @@ module AssDevel
             alias_method :make_item, :make_object
             alias_method :new_folder, :new_group
             alias_method :make_folder, :make_group
+
+            def find_objects(is_folder = false, **options, &block)
+              qtext = "Select T.ref as ref from\n"\
+                " Catalog.#{self.MD_NAME} as T\n where \n"
+              options[:IsFolder] = is_folder
+              qtext << qtext_condition_(**options)
+
+              arr = ole_to_arr_(query(qtext, **options)
+                .Execute.Upload.UnloadColumn('ref'))
+              return if arr.empty?
+              return yield arr if block_given?
+              arr
+            end
           end
 
           module DocumentManger
@@ -544,8 +580,12 @@ module AssDevel
           end
 
           # @todo implements refs finder
-          def find(**attributes, &block)
-            fail NotImplementedError
+          def find(*args, **attributes, &block)
+            arr = find_objects(*args, **attributes, &block)
+            fail "Too many objects found #{args}, #{attributes}" if\
+              arr.is_a? Array && arr.size > 1
+              return arr[0] if arr.is_a? Array
+              arr
           end
         end
 
