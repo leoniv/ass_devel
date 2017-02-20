@@ -259,10 +259,11 @@ module AssDevel
 
             def qtext_condition_(**options)
               qtext = ''
-              options.keys.each do |key|
-                qtext << "and ref.#{key} = &#{key}\n"
+              options.keys.each_with_index do |key, index|
+                op = index != 0 ? 'and' : ''
+                qtext << "#{op} ref.#{key} = &#{key}\n"
               end
-              qtext.gsub!(/^and/,'')
+              qtext
             end
             private :qtext_condition_
 
