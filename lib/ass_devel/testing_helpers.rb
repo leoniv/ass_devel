@@ -711,16 +711,17 @@ module AssDevel
     #    define_fixtures Runtimes::Ext
     #
     #    def preapare_fixt
-    #      fixt_let(:company1, :ref_delete) do |factory, fixtures|
+    #      fixt_let(:company1, :ref_delete) do |factory, fixtures, srv_ole|
     #        factory.Catalogs.Companies.ref do |ref|
     #          ref.Description = 'company1'
     #        end
     #      end
     #
-    #      fixt_let(:company2, :ref_delete) do |factory, fixtures|
+    #      fixt_let(:company2, :ref_delete) do |factory, fixtures, srv_ole|
     #        factory.Catalogs.Companies.ref do |ref|
     #          ref.Description = 'company2'
     #          ref.Holder = fixtures.company1
+    #          ref.Type = srv_ole.Enums.CompanyTypes.Holding
     #        end
     #      end
     #    end
@@ -929,7 +930,8 @@ module AssDevel
 
         def yields(name, &block)
           @yields = true
-          srv_values[name] = yield object_factory, self
+          srv_values[name] = yield object_factory, self,
+            self.srv_ole_runtime.ole_connector
         ensure
           @yields = false
         end
