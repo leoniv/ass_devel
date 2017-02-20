@@ -394,6 +394,14 @@ module AssDevel
             alias_method :document_metadata, :object_metadata
             alias_method :new_doc, :new_object
             alias_method :make_doc, :make_object
+
+            def post_(doc)
+              doc.write(documentWriteMode.Posting)
+            end
+
+            def undo_post_(doc)
+              doc.write(documentWriteMode.UndoPosting)
+            end
           end
 
           module ConstantManager
