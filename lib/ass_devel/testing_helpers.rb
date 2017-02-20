@@ -372,7 +372,7 @@ module AssDevel
               qtext << qtext_condition_(**options)
 
               arr = ole_to_arr_(query(qtext, **options)
-                .Execute.Upload.UnloadColumn('ref'))
+                .Execute.Unload.UnloadColumn('ref'))
               return if arr.empty?
               return yield arr if block_given?
               arr
