@@ -366,7 +366,9 @@ module AssDevel
             def find_objects(is_folder = false, **options, &block)
               qtext = "Select T.ref as ref from\n"\
                 " Catalog.#{self.MD_NAME} as T\n where \n"
-              options[:IsFolder] = is_folder
+
+              options[:IsFolder] = is_folder if object_metadata.Hierarchical
+
               qtext << qtext_condition_(**options)
 
               arr = ole_to_arr_(query(qtext, **options)
