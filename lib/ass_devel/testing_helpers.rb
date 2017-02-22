@@ -628,13 +628,17 @@ module AssDevel
             make(**attributes, &block).Ref
           end
 
-          # @todo implements refs finder
           def find(*args, **attributes, &block)
             arr = find_objects(*args, **attributes, &block)
             fail "Too many objects found #{args}, #{attributes}" if\
               arr.is_a?(Array) && arr.size > 1
               return arr[0] if arr.is_a?(Array)
               arr
+          end
+
+          # Block will be passed indo +what_do+ method
+          def find_or_do(what_do, *args, **find_attributes, &block)
+            find(*args, **find_attributes) || send(what_do, *args, **attributes, &block)
           end
         end
 
