@@ -107,9 +107,18 @@ module AssDevel
                 @wrapper = wrapper
               end
 
-              def method_missing(method, **args)
-                wrapper.gate_way._test_gate_way(wrapper.ole, method, **args)
+              def method_missing(method, *args)
+                wrapper.gate_way._test_gate_way(wrapper.ole, method, **to_hash(*args))
               end
+
+              def to_hash(*args)
+                r = {}
+                args.each_with_index do |a, i|
+                  r["arg_#{i}".to_sym] = a
+                end
+                r
+              end
+              private :to_hash
             end
 
             def private
@@ -140,19 +149,8 @@ module AssDevel
         end
 
         class Form
-          class Context
-            attr_reader :form, :context
-            def initialize(form)
-              @form = form
-            end
-
-            def method_missing(method, **args)
-              return form.gate_way._test_gate_way(form.ole, method, **args) if\
-                self.is_a? Context::Client
-              form.gate_way._test_eval_on_server(form.ole, method, **args)
-            end
-
-            class Server < Context
+          module Context
+            class Server < Abstract::PrivateContext::Context
               class ProperyGetter
                 attr_reader :context
                 def initialize(context)
@@ -172,7 +170,7 @@ module AssDevel
                 private :name
 
                 def get
-                  context.form.gate_way._test_property_get context.form.ole, name
+                  context.wrapper.gate_way._test_property_get context.wrapper.ole, name
                 end
 
                 def method_missing(method, *_)
@@ -185,9 +183,13 @@ module AssDevel
               def prop
                 ProperyGetter.new(self)
               end
+
+              def method_missing(method, *args)
+                wrapper.gate_way._test_eval_on_server(wrapper.ole, method, **to_hash(*args))
+              end
             end
 
-            class Client < Context; end
+            class Client < Abstract::PrivateContext::Context; end
           end
 
           include Abstract::Wrapper
@@ -551,7 +553,7 @@ module AssDevel
           end
         end
 
-        def self.method_missing(method, **args)
+        def self.method_missing(method, *args)
           manager_holder = const_get method
           fail NoMethodError,
             "undefined method `#{method}' for #{self.name}" unless\
