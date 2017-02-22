@@ -102,6 +102,7 @@ module AssDevel
 
           module PrivateContext
             class Context
+              attr_reader :wrapper
               def initialize(wrapper)
                 @wrapper = wrapper
               end
