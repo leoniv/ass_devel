@@ -84,12 +84,58 @@ module AssDevel
 
       # @todo make wrappers for ObjectModule, ManagerModule etc
       module Wrappers
+        module Abstract
+          module Wrapper
+            attr_reader :ole, :gate_way
+            def initialize(ole_obj, ole_runtime)
+              @ole = ole_obj
+              @gate_way = Class.new do
+                like_ole_runtime ole_runtime
+                include TestGateWay
+              end.new
+            end
+
+            def method_missing(method, *args)
+              ole.send(method, *args)
+            end
+          end
+
+          module PrivateContext
+            class Context
+              def initialize(wrapper)
+                @wrapper = wrapper
+              end
+
+              def method_missing(method, **args)
+                wrapper.gate_way._test_gate_way(wrapper.ole, method, **args)
+              end
+            end
+
+            def private
+              @private ||= Context.new(self)
+            end
+          end
+        end
+
         # @todo (see Wrappers)
         module DSL
-          def wrapp_form(name)
-            ole = getForm(name)
+          def wrapp_form(form)
+            case form.class
+            when String then ole = getForm(form)
+            when WIN32OLE then ole = form
+            else fail ArgumentError, 'Expected form name or WIN32OLE instance'
+            end
             Wrappers::Form.new(ole, ole_runtime_get)
           end
+
+          def wrapp_module(ole_module)
+            Module.new(ole_module, ole_runtime_get)
+          end
+        end
+
+        class Module
+          include Abstract::Wrapper
+          include Abstract::PrivateContext
         end
 
         class Form
@@ -143,18 +189,7 @@ module AssDevel
             class Client < Context; end
           end
 
-          attr_reader :ole, :gate_way
-          def initialize(ole_form, ole_runtime)
-            @ole = ole_form
-            @gate_way = Class.new do
-              like_ole_runtime ole_runtime
-              include TestGateWay
-            end.new
-          end
-
-          def method_missing(method, *args)
-            ole.send(method, *args)
-          end
+          include Abstract::Wrapper
 
           def server
             Context::Server.new(self)
