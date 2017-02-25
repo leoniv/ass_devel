@@ -440,6 +440,21 @@ module AssDevel
             def undo_post_(doc)
               doc.write(documentWriteMode.UndoPosting)
             end
+
+            # @todo find document per +date_period+ in
+            #  period Metadata.NumberPeriodicity
+            def find_objects(**options, &block)
+              qtext = "Select T.ref as ref from\n"\
+                " Document.#{self.MD_NAME} as T\n where \n"
+
+              qtext << qtext_condition_(**options)
+
+              arr = ole_to_arr_(query(qtext, **options)
+                .Execute.Unload.UnloadColumn('ref'))
+              return if arr.empty?
+              return yield arr if block_given?
+              arr
+            end
           end
 
           module ConstantManager
