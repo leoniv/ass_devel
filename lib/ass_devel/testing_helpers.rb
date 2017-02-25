@@ -638,7 +638,7 @@ module AssDevel
 
           # Block will be passed indo +what_do+ method
           def find_or_do(what_do, *args, **find_attributes, &block)
-            find(*args, **find_attributes) || send(what_do, *args, **attributes, &block)
+            find(*args, **find_attributes) || send(what_do, *args, **find_attributes, &block)
           end
         end
 
