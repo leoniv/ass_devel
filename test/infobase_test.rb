@@ -122,15 +122,15 @@ module AssDevelTest
 
     it '#src_diff? true' do
       cfg_src = mock
-      cfg_src.expects :repo_ls_tree => '1'
-      cfg_src.expects :repo_ls_tree => '2'
+      cfg_src.expects :repo_shas => '1'
+      cfg_src.expects :repo_shas => '2'
       inst.expects(:db_cfg_src).returns(cfg_src)
       inst.expects(:cfg_src).returns(cfg_src).twice
       inst.src_diff?.must_equal true
     end
 
     it '#src_diff? false' do
-      cfg_src = stub :repo_ls_tree => '1'
+      cfg_src = stub :repo_shas => '1'
       inst.expects(:db_cfg_src).returns(cfg_src)
       inst.expects(:cfg_src).returns(cfg_src).twice
       inst.src_diff?.must_equal false
@@ -157,14 +157,28 @@ module AssDevelTest
       inst.send(:fail_if_src_not_exists, src)
     end
 
-    it '#load_cfg_src' do
+    it '#load_cfg_src with xml files src' do
       cfg_src = mock
-      cfg_src.expects(:src_root).returns(:cfg_src)
+      cfg_src.expects(:src_root).returns(:cfg_src).twice
       cfg = mock
       inst.expects(:fail_if_src_not_exists).with(cfg_src)
       inst.expects(:cfg).returns(cfg)
       inst.expects(:cfg_src).returns(cfg_src).at_least_once
+      File.expects(:file?).with(:cfg_src).returns false
       cfg.expects(:load_xml).with(:cfg_src).returns(:ok)
+      inst.send(:load_cfg_src).must_equal(:ok)
+    end
+
+    it '#load_cfg_src with binary file' do
+      cfg_src = mock
+      cfg_src.expects(:src_root).returns(:cfg_src).twice
+      cfg = mock
+      inst.expects(:fail_if_src_not_exists).with(cfg_src)
+      inst.expects(:cfg).returns(cfg)
+      inst.expects(:cfg_src).returns(cfg_src).at_least_once
+      File.expects(:file?).with(:cfg_src).returns true
+      cfg.expects(:load).with(:cfg_src).returns(:ok)
+      cfg.expects(:load_xml).never
       inst.send(:load_cfg_src).must_equal(:ok)
     end
 
@@ -201,18 +215,18 @@ module AssDevelTest
 
     include AssDevel::Support::TmpPath
     it 'InfoBase_make_smoky' do
-      def src_mock(repo_ls_tree)
+      def src_mock(repo_shas)
         src = mock
         src.responds_like(src_stub)
         src.expects(:exists?).returns(true).at_least_once
         src.expects(:src_root).returns(Fixtures::IB_XML_SRC).at_least_once
-        src.expects(:repo_ls_tree).returns(repo_ls_tree)
+        src.expects(:repo_shas).returns(repo_shas)
         src
       end
 
       cs = AssDevel::TmpInfoBase.new.connection_string
       ib = AssDevel::InfoBase
-        .new('name', cs, src_mock('ls_tree 1'), src_mock('ls tree 2'))
+        .new('name', cs, src_mock('shas 1'), src_mock('shas 2'))
       begin
         ib.exists?.must_equal false
         ib.make
