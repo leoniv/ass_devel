@@ -222,18 +222,14 @@ module AssDevelTest
     end
 
     it '#src_diff' do
-      cfg_src = mock
-      cfg_src.expects(:repo_ls_tree).returns('1 ls tree')
-      cfg_src.expects(:repo_ls_tree).returns('2 ls tree')
-      inst_stub.expects(:db_cfg_src).returns(cfg_src)
-      inst_stub.expects(:cfg_src).returns(cfg_src)
-      diff = inst_stub.src_diff
-      diff.must_be_instance_of Diffy::Diff
+      proc {
+        inst_stub.src_diff.must_be_instance_of Nil # TODO not instance of Nil
+      }.must_raise NotImplementedError
     end
 
     it '#src_diff? false' do
       cfg_src = mock
-      cfg_src.expects(:repo_ls_tree).returns('ls tree').twice
+      cfg_src.expects(:repo_shas).returns('shas').twice
       inst_stub.expects(:db_cfg_src).returns(cfg_src)
       inst_stub.expects(:cfg_src).returns(cfg_src)
       inst_stub.src_diff?.must_equal false
@@ -241,8 +237,8 @@ module AssDevelTest
 
     it '#src_diff true' do
       cfg_src = mock
-      cfg_src.expects(:repo_ls_tree).returns('1 ls tree')
-      cfg_src.expects(:repo_ls_tree).returns('2 ls tree')
+      cfg_src.expects(:repo_shas).returns('1 shas')
+      cfg_src.expects(:repo_shas).returns('2 shas')
       inst_stub.expects(:db_cfg_src).returns(cfg_src)
       inst_stub.expects(:cfg_src).returns(cfg_src)
       inst_stub.src_diff?.must_equal true
