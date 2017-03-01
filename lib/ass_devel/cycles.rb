@@ -362,5 +362,47 @@ module AssDevel
         end
       end
     end
+
+    module Patch
+      class Design < Application::Design
+        def build
+          @build ||= AssDevel::Patch::Builds::FileApp
+            .new(:design, build_dir, **build_app_opts)
+        end
+      end
+
+      class Release < Application::Release
+        REL_FILE_NAME = '1Cv8.cf'
+        def check_spec
+          # TODO: check or testing app specification
+          check_version
+        end
+
+        def check_version
+          console 'Check version'
+          fail 'FIXME'
+#          fail DifferentVersionError,
+#            "App version `#{app_version}'"\
+#            " not match app_spec version `#{app_spec.version}'" unless\
+#            app_version == app_spec.version
+        end
+
+        def cf_file
+          File.join(release_dir, REL_FILE_NAME)
+        end
+
+        def make_cf
+          cf_file_ = cf_file
+          cmd = info_base.designer do
+            fail 'FIXME'
+#            createDistributionFiles do
+#              cfFile cf_file_
+#            end
+          end
+          cmd.run.wait.result.verify!
+          cf_file_
+        end
+      end
+    end
   end
 end

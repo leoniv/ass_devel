@@ -16,6 +16,7 @@ module AssDevel
   require 'ass_devel/builds'
   require 'ass_devel/cycles'
   require 'ass_devel/application'
+  require 'ass_devel/patch'
   require 'ass_devel/externals'
   require 'ass_devel/dsl'
 end
