@@ -99,10 +99,105 @@ module AssDevel
         def app_version_get
           fail 'Abstract method call'
         end
+
+        def release
+          check_rel_dir
+          fail "Tag #{version_tag} exists" if tag_exist?
+          binary_release
+          commit_binary if respond_to? :commit_binary
+          make_tag
+          console "TODO: manually push commits and tags"
+        end
+
+        def before_release
+          fail 'Abstract method call'
+        end
+
+        def after_release
+          fail 'Abstract method call'
+        end
+
+        def run_cycle
+          guard_clear
+          before_release
+          release
+          after_release
+        end
+
+        def release_dir
+          app_spec.release_dir || fail('Release dir require')
+        end
+
+        def binary_release
+          @binary_release = binary_release_make
+        end
+
+        def check_rel_dir
+          fail "#{release_dir} not exists or it doesn't directory" unless\
+            File.directory?(release_dir)
+        end
+
+        def binary_release_make
+          fail 'Abstract method call'
+        end
       end
 
-      module BinaryRelase
+      module CommitBinary
+        class RelfileUploder
+          include Support::Shell
 
+          attr_reader :cycle, :version, :base_path, :flatten
+          def initialize(cycle, version, base_path, flatten = false)
+            @cycle = cycle
+            @version = Gem::Version.new(version)
+            @base_path = base_path
+            @flatten = flatten
+          end
+
+          def tag
+           Cycles::Mixins::Release.version_tag(version.to_s)
+          end
+
+          def version_exist?
+            cycle.class.versions.include? version
+          end
+
+          def upload
+            FileUtils.mkdir_p(File.dirname(dest_file))
+            fail "Rel #{tag} not exists" unless version_exist?
+            sh("git show #{tag}:#{release_file} > #{dest_file}")
+          end
+
+          def release_file
+            sh "git ls-tree --full-name --name-only #{tag} #{cycle.release_file}"
+          end
+
+          def dest_file
+            File.join(base_path, fname)
+          end
+
+          def fname
+            fail 'Abstract method call'
+          end
+
+          def sh(cmd)
+            handle_shell(cmd)
+          end
+        end
+
+        def commit_binary
+          handle_shell "git add \"#{binary_release}\""
+          handle_shell(
+            "git commit -i \"#{binary_release}\" -m \"Release #{version_tag}\"")
+        end
+
+        def upload_release(version, base_path, flatten = false)
+          fail 'Abstract method call'
+        end
+
+        def release_file
+          fail 'Abstract method call'
+        end
       end
     end
 
@@ -219,55 +314,18 @@ module AssDevel
 
       class Release < Design
         # @api private
-        class RelfileUploder
-          include Support::Shell
-
-          REL_FILE_NAME = '1Cv8.cf'
+        class RelfileUploder < Mixins::CommitBinary::RelfileUploder
+          DEST_FILE_NAME = '1Cv8.cf'
           attr_reader :cycle, :version, :base_path, :flatten
-          def initialize(cycle, version, base_path, flatten = false)
-            @cycle = cycle
-            @version = Gem::Version.new(version)
-            @base_path = base_path
-            @flatten = flatten
-          end
-
-          def tag
-           Cycles::Mixins::Release.version_tag(version.to_s)
-          end
-
-          def version_exist?
-            cycle.class.versions.include? version
-          end
-
-          def upload
-            fail "Rel #{tag} not exists" unless version_exist?
-            sh("git show #{tag}:#{src_cf_file} > #{dest_cf_file}")
-          end
-
-          def src_cf_file
-            sh "git ls-tree --full-name --name-only #{tag} #{cycle.cf_file}"
-          end
-
-          def dest_cf_file
-            FileUtils.mkdir_p(File.dirname(dest_path))
-            dest_path
-          end
-
-          def dest_path
-            File.join(base_path, fname)
-          end
 
           def fname
             return "#{cycle.app_spec.name}.#{version}.cf" if flatten
-            File.join(cycle.app_spec.name.to_s, version.to_s, REL_FILE_NAME)
-          end
-
-          def sh(cmd)
-            handle_shell(cmd)
+            File.join(cycle.app_spec.name.to_s, version.to_s, DEST_FILE_NAME)
           end
         end
 
         include Mixins::Release
+        include Mixins::CommitBinary
 
         REL_FILE_NAME = '1Cv8.cf.distrib'
 
@@ -275,21 +333,23 @@ module AssDevel
           File.join(release_dir, REL_FILE_NAME)
         end
 
-        def release_dir
-          app_spec.release_dir || fail('Release dir require')
+        def release_file
+          cf_file
         end
 
         def upload_release(version, base_path, flatten = false)
           RelfileUploder.new(self, version, base_path, flatten).upload
         end
 
-        def run_cycle
-          guard_clear
+        def before_release
           rebuild
           check_cf_diff
           check_spec
           check_config
-          release
+        end
+
+        def after_release
+          # NOP
         end
 
         def build
@@ -350,27 +410,9 @@ module AssDevel
           fail CheckConfigError, ph.result.assout unless ph.result.success?
         end
 
-        def commit_cf(cf)
-          handle_shell "git add \"#{cf}\""
-          handle_shell "git commit -i \"#{cf}\" -m \"Release #{version_tag}\""
-        end
-
-        def release
-          fail "Tag #{version_tag} exists" if tag_exist?
-          build_cf
-          make_tag
-          console "TODO: manually push commits and tags"
-        end
-
-        def check_rel_dir
-          fail "#{release_dir} not exists or it doesn't directory" unless\
-            File.directory?(release_dir)
-        end
-
-        def build_cf
-          check_rel_dir
+        def binary_release_make
           console "Build disribuition .cf file`#{version_tag}'"
-          commit_cf make_cf
+          make_cf
         end
 
         def make_cf
