@@ -13,9 +13,97 @@ module AssDevel
       end
     end
   end
-  module Cycles
-    module Mixins
 
+  module Cycles
+    class DifferentConfigError < StandardError; end
+    class DifferentVersionError < StandardError; end
+    class CheckConfigError < StandardError; end
+
+    module Mixins
+      module Release
+        include Support::Shell
+        extend Support::Shell
+
+        TAG_PREFIX = 'v'
+
+        def self.version_tag(version)
+          "#{TAG_PREFIX}#{version}"
+        end
+
+        def self.versions
+          version_tags.map do |str|
+            str.gsub(%r{^#{TAG_PREFIX}},'')
+          end.map {|str| Gem::Version.new(str)}.sort
+        end
+
+        def self.version_tags
+          handle_shell('git tag').split("\n")
+            .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+\.\d+\z}}
+        end
+
+        def version_tag
+          Cycles::Mixins::Release.version_tag(app_version)
+        end
+
+        def guard_clear
+          repo_clear? || fail('Repo doesn\'t clean!')
+        end
+
+        def repo_clear?
+          repo_status.empty?
+        end
+
+        def repo_status
+          handle_shell "git status -s"
+        end
+
+        def make_tag
+          console "Make tag `#{version_tag}'"
+          tag_version
+        end
+
+        def tag_version
+          handle_shell "git tag -m \"Version #{app_version}\" #{version_tag}"
+        end
+
+        def tag_exist?
+          return false unless\
+            self.class.version_tags.include?(version_tag)
+          true
+        end
+
+        def self.included(base)
+          base.instance_eval do
+            def versions
+              Cycles::Mixins::Release.versions
+            end
+
+            def version_tags
+              Cycles::Mixins::Release.version_tags
+            end
+          end
+        end
+
+        def check_version
+          console 'Check version'
+          fail DifferentVersionError,
+            "App version `#{app_version}'"\
+            " not match app_spec version `#{app_spec.version}'" unless\
+            app_version == app_spec.version
+        end
+
+        def app_version
+          @app_version ||= app_version_get
+        end
+
+        def app_version_get
+          fail 'Abstract method call'
+        end
+      end
+
+      module BinaryRelase
+
+      end
     end
 
     module Application
@@ -24,6 +112,7 @@ module AssDevel
         include Support::Logger
         attr_accessor :fixturies, :before_run, :after_run
         attr_reader :app_spec, :options
+
         def initialize(app_spec, **options)
           @app_spec = app_spec
           @options = options
@@ -132,6 +221,7 @@ module AssDevel
         # @api private
         class RelfileUploder
           include Support::Shell
+
           REL_FILE_NAME = '1Cv8.cf'
           attr_reader :cycle, :version, :base_path, :flatten
           def initialize(cycle, version, base_path, flatten = false)
@@ -142,7 +232,7 @@ module AssDevel
           end
 
           def tag
-            cycle.class.version_tag(version.to_s)
+           Cycles::Mixins::Release.version_tag(version.to_s)
           end
 
           def version_exist?
@@ -177,28 +267,9 @@ module AssDevel
           end
         end
 
-        include Support::Shell
+        include Mixins::Release
 
-        TAG_PREFIX = 'v'
         REL_FILE_NAME = '1Cv8.cf.distrib'
-        class DifferentConfigError < StandardError; end
-        class DifferentVersionError < StandardError; end
-        class CheckConfigError < StandardError; end
-
-        def self.version_tag(version)
-          "#{TAG_PREFIX}#{version}"
-        end
-
-        def self.versions
-          version_tags.map do |str|
-            str.gsub(%r{^#{TAG_PREFIX}},'')
-          end.map {|str| Gem::Version.new(str)}.sort
-        end
-
-        def self.version_tags
-          handle_shell('git tag').split("\n")
-            .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+\.\d+\z}}
-        end
 
         def cf_file
           File.join(release_dir, REL_FILE_NAME)
@@ -228,10 +299,6 @@ module AssDevel
 
         protected
 
-        def guard_clear
-          repo_clear? || fail('Repo doesn\'t clean!')
-        end
-
         def check_cf_diff
           fail DifferentConfigError, 'Cfg and DbCfg are different' if src.src_diff?
         end
@@ -239,18 +306,6 @@ module AssDevel
         def check_spec
           # TODO: check or testing app specification
           check_version
-        end
-
-        def check_version
-          console 'Check version'
-          fail DifferentVersionError,
-            "App version `#{app_version}'"\
-            " not match app_spec version `#{app_spec.version}'" unless\
-            app_version == app_spec.version
-        end
-
-        def app_version
-          @app_version ||= app_version_get
         end
 
         def app_version_get
@@ -295,20 +350,6 @@ module AssDevel
           fail CheckConfigError, ph.result.assout unless ph.result.success?
         end
 
-        def version_tag
-          self.class.version_tag(app_version)
-        end
-
-        def tag_version
-          handle_shell "git tag -m \"Version #{app_version}\" #{version_tag}"
-        end
-
-        def tag_exist?
-          return false unless\
-            self.class.version_tags.include?(version_tag)
-          true
-        end
-
         def commit_cf(cf)
           handle_shell "git add \"#{cf}\""
           handle_shell "git commit -i \"#{cf}\" -m \"Release #{version_tag}\""
@@ -319,11 +360,6 @@ module AssDevel
           build_cf
           make_tag
           console "TODO: manually push commits and tags"
-        end
-
-        def make_tag
-          console "Make tag `#{version_tag}'"
-          tag_version
         end
 
         def check_rel_dir
@@ -346,14 +382,6 @@ module AssDevel
           end
           cmd.run.wait.result.verify!
           cf_file_
-        end
-
-        def repo_clear?
-          repo_status.empty?
-        end
-
-        def repo_status
-          handle_shell "git status -s"
         end
       end
 
