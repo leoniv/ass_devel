@@ -1,4 +1,18 @@
 module AssDevel
+  module Support
+    # TODO: extract shell
+    module Shell
+      def self.handle_shell(cmd)
+        out = `#{cmd} 2>&1`.strip
+        fail out unless $?.success?
+        out
+      end
+
+      def handle_shell(cmd)
+        AssDevel::Support::Shell.handle_shell(cmd)
+      end
+    end
+  end
   module Cycles
     module Mixins
 
@@ -117,6 +131,7 @@ module AssDevel
       class Release < Design
         # @api private
         class RelfileUploder
+          include Support::Shell
           REL_FILE_NAME = '1Cv8.cf'
           attr_reader :cycle, :version, :base_path, :flatten
           def initialize(cycle, version, base_path, flatten = false)
@@ -158,9 +173,11 @@ module AssDevel
           end
 
           def sh(cmd)
-            cycle.class.handle_shell(cmd)
+            handle_shell(cmd)
           end
         end
+
+        include Support::Shell
 
         TAG_PREFIX = 'v'
         REL_FILE_NAME = '1Cv8.cf.distrib'
@@ -181,13 +198,6 @@ module AssDevel
         def self.version_tags
           handle_shell('git tag').split("\n")
             .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+\.\d+\z}}
-        end
-
-        # TODO: extract shell
-        def self.handle_shell(cmd)
-          out = `#{cmd} 2>&1`.strip
-          fail out unless $?.success?
-          out
         end
 
         def cf_file
@@ -336,10 +346,6 @@ module AssDevel
           end
           cmd.run.wait.result.verify!
           cf_file_
-        end
-
-        def handle_shell(cmd)
-          self.class.handle_shell(cmd)
         end
 
         def repo_clear?
