@@ -1,5 +1,9 @@
 module AssDevel
   module Cycles
+    module Mixins
+
+    end
+
     module Application
       # @abstract
       class Abstract
@@ -22,6 +26,10 @@ module AssDevel
           fail 'Abstract method class'
         end
         private :run_cycle
+
+        def console(m)
+          puts m
+        end
       end
 
       class Design < Abstract
@@ -85,10 +93,6 @@ module AssDevel
           build.spec = app_spec
           build.src = src
           build.built?
-        end
-
-        def console(m)
-          puts m
         end
 
         def open_designer
