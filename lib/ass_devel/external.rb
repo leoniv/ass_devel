@@ -1,5 +1,5 @@
 module AssDevel
-  module Externals
+  module External
     class Specification
 
     end
