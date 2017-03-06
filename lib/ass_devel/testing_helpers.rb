@@ -130,11 +130,10 @@ module AssDevel
         # @todo (see Wrappers)
         module DSL
           def wrapp_form(form)
-            case form.class
-            when String then ole = getForm(form)
-            when WIN32OLE then ole = form
-            else fail ArgumentError, 'Expected form name or WIN32OLE instance'
-            end
+            ole = getForm(form) if form.is_a? ::String
+            ole = form if form.is_a? ::WIN32OLE
+            fail ArgumentError, 'Expected form name or WIN32OLE instance' unless\
+              ole
             Wrappers::Form.new(ole, ole_runtime_get)
           end
 
