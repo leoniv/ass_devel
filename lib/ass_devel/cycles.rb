@@ -38,7 +38,7 @@ module AssDevel
 
         def self.version_tags
           handle_shell('git tag').split("\n")
-            .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+\.\d+\z}}
+            .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+(\.\d+)?\z}}
         end
 
         def version_tag
