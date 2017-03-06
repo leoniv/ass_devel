@@ -1,5 +1,6 @@
 module AssDevel
   module Rake
+    require 'ass_devel/rake/app_test_task'
     class ExtTestTask < AppTestTask
       attr_accessor :app_template
 
