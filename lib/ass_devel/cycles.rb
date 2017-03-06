@@ -484,5 +484,195 @@ module AssDevel
         end
       end
     end
+
+    module External
+      module Abstract
+        attr_accessor :build_dir
+        attr_reader :app_template
+
+        def full_win_path
+          AssLauncher::Support::Platforms
+            .path(build.build_path).realpath.win_string
+        end
+
+        def console(m)
+          puts m
+        end
+
+        def run(app_template)
+          @app_template = app_template
+          super()
+        end
+
+        def info_base
+          build.info_base
+        end
+
+        def clean_up
+          rm_build
+          rm_application
+        end
+
+        def rm_build
+          if built?
+            console "Remove existing build: #{build.build_path}"
+            build.rm!
+          end
+        end
+
+        def rm_application
+          unless info_base.read_only?
+            console "Remove existing application: #{info_base.connection_string}"
+            info_base.rm! :yes
+          end
+        end
+
+        def built?
+          build.spec = spec
+          build.src = src
+          build.binary_built?
+        end
+
+        def src
+          spec.src
+        end
+
+        def build
+          @build ||= AssDevel::External::Builds::BinFile
+            .new(app_template, cycle_name, build_dir, **options)
+        end
+
+        def cycle_name
+          self.class.name.split('::').last.downcase.to_sym
+        end
+
+        def make_build
+          make_application
+          begin
+            make_binary
+          rescue
+            rm_application
+            raise
+          end
+        end
+
+        def make_binary
+          console "Build src: #{src.src_root}"
+          src.make_build build
+          console "Builded binary: '#{build.build_path}'"
+        end
+
+        def make_application
+          console "Build application: #{info_base.connection_string}"
+          info_base.make unless info_base.read_only?
+        end
+
+        def rebuild
+          rm_build
+          make_build
+        end
+
+        def self.included(base)
+          base.send(:alias_method, :spec, :app_spec)
+        end
+      end
+
+      class Design < Application::Abstract
+        include Abstract
+
+        def make_test_build(app_template)
+          @app_template = app_template
+          build.spec = spec
+          build.src = src
+          make_build
+          [build.build_path,
+           info_base.connection_string,
+           build.platform_version]
+        end
+
+        def run_cycle
+          rebuild
+          open_designer
+          dump_src
+          clean_up
+        end
+
+        def open_designer
+          console "Binary path for designer: #{full_win_path}"
+          console "Wait while designer open ..."
+          info_base.designer.run.wait.result.verify!
+        end
+
+        def dump_src
+          console "Dump binary to: #{src.src_root}"
+          src.dump
+        end
+      end
+
+      class Release < Application::Abstract
+        class RelfileUploder < Mixins::CommitBinary::RelfileUploder
+          attr_reader :cycle, :version, :base_path, :flatten
+
+          def fname
+            return flatten_fname if flatten
+            File.join(cycle.spec.name.to_s, version.to_s, flatten_fname)
+          end
+
+          def flatten_fname
+            "#{cycle.spec.name}.#{version}.#{cycle.spec.type.ext}"
+          end
+        end
+        include Abstract
+        include Mixins::Release
+        include Mixins::CommitBinary
+
+        def app_version_get
+          begin
+            ext = info_base.ole(:external)
+            ext.__open__ info_base.connection_string
+            result = external_object(ext).Version
+          ensure
+            ext.__close__ if ext
+          end
+          result
+        end
+
+        def external_object(ole_connector)
+          ole_connector.send(ole_manager).Create(full_win_path)
+        end
+
+        def ole_manager
+          spec.type.ole_manager
+        end
+
+        def before_release
+          rebuild
+          check_spec
+        end
+
+        def check_spec
+          check_version
+        end
+
+        def after_release
+          clean_up
+        end
+
+        # Returns path to binary file in repo
+        def binary_release_make
+          console "Build release binary `#{version_tag}'"
+          FileUtils.cp build.build_path, release_file
+          release_file
+        end
+
+        def upload_release(version, base_path, flatten = false)
+          RelfileUploder.new(self, version, base_path, flatten).upload
+        end
+
+        def release_file
+          File.join(release_dir, "#{spec.name}.#{spec.type.ext}")
+        end
+      end
+    end
   end
 end
