@@ -487,6 +487,36 @@ module AssDevel
               rm
             end
           end
+
+          module ExternalDataProcessorManager
+            def md_collection
+              :ExternalDataProcessors
+            end
+
+            def external_object
+              send(md_collection).Create(self.MD_NAME)
+            end
+
+            def external_connect(path, safe_mode = false)
+              external_object_path = AssLauncher::Support::Platforms
+                .path(path.to_s).realpath
+
+              dd = ole_connector
+                .newObject('BinaryData', external_object_path.win_string)
+
+              link = ole_connector.putToTempStorage(dd)
+
+              ole_connector.send(md_collection)
+                .connect(link, self.MD_NAME, safe_mode)
+            end
+          end
+
+          module ExternalReportManager
+            include ExternalDataProcessorManager
+            def md_collection
+              :ExternalReports
+            end
+          end
         end
 
         ABSTRACTS_ABSTRACTS = [:AbstractObjectManager,
