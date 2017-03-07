@@ -163,7 +163,7 @@ module AssDevel
 
                 def name
                   r = stack.map(&:to_s).join('.')
-                  satck.clear
+                  stack.clear
                   r
                 end
                 private :name
