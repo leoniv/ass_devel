@@ -672,6 +672,12 @@ module AssDevel
             make(**attributes, &block).Ref
           end
 
+          # Find object.
+          # @param atgs array of suitable arguments for +find_objects+
+          # @param attributes hash of suitable attributes for +find_objects+
+          # @raise RuntimeError if many objects whas found
+          # @return [nil WIN32OLE] usually found WIN32OLE ref type object like
+          #  DocumentRef, CatalogRef, etc
           def find(*args, **attributes, &block)
             arr = find_objects(*args, **attributes, &block)
             fail "Too many objects found #{args}, #{attributes}" if\
@@ -680,9 +686,12 @@ module AssDevel
               arr
           end
 
-          # Block will be passed indo +what_do+ method
+          # Find object per +find_attributes+ and call +what_do+ uless object
+          # found. Block will be passed indo +what_do+ method. +args+ is
+          # suitable for {#find} method +args+ array.
+          # @param what_do [Symbol] method name :make, :new, :ref
           def find_or_do(what_do, *args, **find_attributes, &block)
-            find(*args, **find_attributes) || send(what_do, *args, **find_attributes, &block)
+            find(*args, **find_attributes) || send(what_do, **find_attributes, &block)
           end
         end
 
@@ -805,7 +814,7 @@ module AssDevel
     #
     # @example
     #  # Monkey patch of #testing_helper_module
-    #  module AssTest
+    #  module AssDevel
     #    module TestingHelpers
     #      module StringInternal
     #        def testing_helper_module
