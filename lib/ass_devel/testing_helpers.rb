@@ -418,6 +418,32 @@ module AssDevel
             klass = recognize_attr_class(name)
             wrapp_("attribute_#{klass}".to_sym, name)
           end
+          alias_method :[], :attribute
+
+          # @example
+          #  form.attributes.AttrName #=> wrapper
+          def attributes
+            Class.new do
+              def initialize(form)
+                @form = form
+              end
+
+              def stack
+                @stack ||= []
+              end
+
+              def method_missing(m, *a)
+                stack << m
+                execute
+              end
+
+              def execute
+                return self if stack.size < 1
+                @form.attribute(stack.shift)
+              end
+            end.new(self)
+          end
+          alias_method :attr, :attributes
 
           # @todo Implemnts this
           def recognize_attr_class(name)
