@@ -216,7 +216,7 @@ module AssDevel
             attr_reader :form_wrapper, :name
             def initialize(form_wrapper, name)
               @form_wrapper = form_wrapper
-              @name = name
+              @name = name.to_s
             end
 
             def ole
