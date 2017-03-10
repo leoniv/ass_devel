@@ -312,7 +312,8 @@ module AssDevel
                 end
 
                 def method_missing(m, *a)
-                  ole.send(m, *a)
+                  return ole.send(m, *a) if ole.ole_respond_to? m
+                  srv_prop_get(m)
                 end
 
                 def item_srv_prop_get(item, prop)
