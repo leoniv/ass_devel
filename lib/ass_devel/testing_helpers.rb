@@ -440,6 +440,14 @@ module AssDevel
             widgets.button.send(button).click
           end
 
+          # Set form attributes
+          def set(**attributes, &block)
+            attributes.each do |k, v|
+              ole.send("#{k}=", v)
+            end
+            yield self if block_given?
+          end
+
           # @return attribute wrapper
           def attribute(name)
             klass = recognize_attr_class(name)
