@@ -226,6 +226,14 @@ module AssDevel
             def method_missing(m, *a)
               ole.send(m, *a)
             end
+
+            def server
+              form_wrapper.server
+            end
+
+            def client
+              form_wrapper.client
+            end
           end
 
           module Attribute
@@ -233,8 +241,18 @@ module AssDevel
               include AbstractFormElementWrapper
 
               def ole
-                @ole ||= form_wrapper.server.prop.send(name).get
+                @ole ||= form_wrapper.send(name)
               end
+
+              def attr_srv_prop_get(attr_, prop)
+                server.prop.send(attr_).send(prop).get
+              end
+              private :attr_srv_prop_get
+
+              def srv_prop_get(prop)
+                attr_serv_prop_get(name, prop)
+              end
+              alias_method :[], :srv_prop_get
             end
 
             class Generic < Abstract
@@ -284,14 +302,6 @@ module AssDevel
 
                 def srv_prop_get(prop)
                   item_srv_prop_get(name, prop)
-                end
-
-                def server
-                  form_wrapper.server
-                end
-
-                def client
-                  form_wrapper.client
                 end
               end
 
@@ -443,7 +453,7 @@ module AssDevel
               end
             end.new(self)
           end
-          alias_method :attr, :attributes
+          alias_method :atr, :attributes
 
           # @todo Implemnts this
           def recognize_attr_class(name)
