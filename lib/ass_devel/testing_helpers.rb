@@ -330,6 +330,10 @@ module AssDevel
                   def data_path
                     srv_prop_get :DataPath
                   end
+
+                  def data_source
+                    form_wrapper.attribute(data_path)
+                  end
                 end
 
                 module GetAction
@@ -371,10 +375,6 @@ module AssDevel
                 end
               end
               alias_method :[], :column
-
-              def data_source
-                form_wrapper.attribute(data_path)
-              end
             end
 
             class Button
