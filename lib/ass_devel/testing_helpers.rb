@@ -250,7 +250,7 @@ module AssDevel
               private :attr_srv_prop_get
 
               def srv_prop_get(prop)
-                attr_serv_prop_get(name, prop)
+                attr_srv_prop_get(name, prop)
               end
               alias_method :[], :srv_prop_get
             end
