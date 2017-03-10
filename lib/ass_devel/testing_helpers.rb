@@ -319,6 +319,10 @@ module AssDevel
                 end
               end
               alias_method :[], :column
+
+              def data_source
+                form_wrapper.send(data_path)
+              end
             end
 
             class Button
