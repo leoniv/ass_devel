@@ -148,6 +148,7 @@ module AssDevel
         end
 
         class Form
+          include Abstract::Wrapper
           module Context
             class Server < Abstract::PrivateContext::Context
               class ProperyGetter
@@ -191,7 +192,17 @@ module AssDevel
             class Client < Abstract::PrivateContext::Context; end
           end
 
-          include Abstract::Wrapper
+          def self.method_missing(m, *a)
+            split = m.to_s.split('_')
+            fail NoMethodError, "undefined method `#{m}' for #{self.name}" if\
+              split.shift != 'wrapp'
+            _klass_(split).new(*a)
+          end
+
+          def self._klass_(split)
+            eval split.map(&:capitalize).join('::')
+          end
+          private_class_method :_klass_
 
           def server
             Context::Server.new(self)
@@ -199,6 +210,181 @@ module AssDevel
 
           def client
             Context::Client.new(self)
+          end
+
+          # Define of 1C ManagedForm Widgets wrappers
+          # Winget class hase name restriction. Name of class mustn't be
+          # cammel-case. Class name +FormField+ is wrong but +Formfield+ is
+          # good. Restriction caused by dinamicaly generated {Form}
+          # interface. {Form.method_missing} translate +wrapp_*+ methods to a
+          # class name, example +Form.wrapp_widget_formfield+ or
+          # +Form.wrapp_(:widget_formfield+ returns {Form::Widgets::Formfield}
+          # instance. See also {Form._klass_}
+          # @example
+          #   describe 'CommonForms.FormName' do
+          #     like_ole_runtime Thin
+          #     include AssDevel::TestingHelpers::TestGateWay::Wrappers::DSL
+          #
+          #     def form
+          #       @form ||= wrapp_form(getForm('CommonForm.FormName)
+          #     end
+          #
+          #     it 'Clik button' do
+          #       form.wrapp_(:widget_button, :ButtonName).click
+          #     end
+          #
+          #     it 'ClienList binds with the correct data source' do
+          #       form.wrapp_(:widget_formtable, :ClientsList)
+          #         .data_path.must_equal 'ClientsDinamycalyList'
+          #     end
+          #   end
+          module Widget
+            module Abstract
+              module Item
+                attr_reader :form_wrapper, :name
+                def initialize(form_wrapper, name)
+                  @form_wrapper = form_wrapper
+                  @name = name
+                end
+
+                def ole
+                  @ole ||= form_wrapper.Items.send(name)
+                end
+
+                def method_missing(m, *a)
+                  ole.send(m, *a)
+                end
+
+                def item_srv_prop_get(item, prop)
+                  server.prop.Items.send(item).send(prop).get
+                end
+                private :item_srv_prop_get
+
+                def srv_prop_get(prop)
+                  item_srv_prop_get(name, prop)
+                end
+
+                def server
+                  form_wrapper.server
+                end
+
+                def client
+                  form_wrapper.client
+                end
+              end
+
+              module ItHas
+                module DataPath
+                  def data_path
+                    srv_prop_get :DataPath
+                  end
+                end
+
+                module GetAction
+                  def get_action(action)
+                    server.GetAction(action)
+                  end
+                end
+              end
+            end
+
+            class Formfield
+              include Abstract::Item
+              include Abstract::ItHas::DataPath
+              include Abstract::ItHas::GetAction
+            end
+
+            class Formtable
+              include Abstract::Item
+              include Abstract::ItHas::DataPath
+              include Abstract::ItHas::GetAction
+
+              def fields
+                @fields ||= fields_get
+              end
+
+              def fields_get
+                r = []
+                ole.ChildItems.each do |item|
+                  r << form_wrapper.widget(:formfield, item.Name) if\
+                    item.ole_respond_to?(:WarningOnEditRepresentation)
+                end
+                r
+              end
+              private :fields_get
+
+              def column(coll)
+                fields.find do |f|
+                  f.data_path == "#{data_path}.#{coll}"
+                end
+              end
+              alias_method :[], :column
+            end
+
+            class Button
+              include Abstract::Item
+
+              def method
+                command.Action
+              end
+
+              def click
+                client.send(method, command)
+              end
+
+              def command
+                form_wrapper.Commands.Find(commandName)
+              end
+            end
+          end
+
+          # Dinamicaly generate Wrappers::Form*
+          # We cant't use +#method_missing+ because +#method_missing+
+          # forward messages into {#ole} object
+          # @exmple
+          #   form.wrapp_(:widget_button, :ButtonName).click
+          def wrapp_(what, *args)
+            AssDevel::TestingHelpers::TestGateWay::Wrappers::Form
+              .send("wrapp_#{what}", *args.unshift(self))
+          end
+
+          # Dinamicaly generate Wrappers::Form::Widgets*
+          # @exaple
+          #   form.widget(:button, :ButtonName).click
+          def widget(what, name)
+            wrapp_("widget_#{what}".to_sym, name)
+          end
+
+          # Dinamicaly generate Wrappers::Form::Widgets*
+          # @exaple
+          #   form.widget.button.ButtonName.click
+          def widgets
+            Class.new do
+              def initialize(form)
+                @form = form
+              end
+
+              def stack
+                @stack ||= []
+              end
+
+              def method_missing(m, *a)
+                stack << m
+                execute
+              end
+
+              def execute
+                return self if stack.size < 2
+                @form.widget(*stack)
+              end
+            end.new(self)
+          end
+
+          # Click on button
+          # @exaple
+          #  form.click(:ButtonName)
+          def click(button)
+            widgets.button.send(button).click
           end
         end
       end
