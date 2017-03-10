@@ -212,6 +212,36 @@ module AssDevel
             Context::Client.new(self)
           end
 
+          module AbstractFormElementWrapper
+            attr_reader :form_wrapper, :name
+            def initialize(form_wrapper, name)
+              @form_wrapper = form_wrapper
+              @name = name
+            end
+
+            def ole
+              fail 'Abstract method call'
+            end
+
+            def method_missing(m, *a)
+              ole.send(m, *a)
+            end
+          end
+
+          module Attribute
+            class Abstract
+              include AbstractFormElementWrapper
+
+              def ole
+                @ole ||= form_wrapper.server.prop.send(name).get
+              end
+            end
+
+            class Generic < Abstract
+
+            end
+          end
+
           # Define of 1C ManagedForm Widgets wrappers
           # Winget class hase name restriction. Name of class mustn't be
           # cammel-case. Class name +FormField+ is wrong but +Formfield+ is
@@ -241,18 +271,10 @@ module AssDevel
           module Widget
             module Abstract
               module Item
-                attr_reader :form_wrapper, :name
-                def initialize(form_wrapper, name)
-                  @form_wrapper = form_wrapper
-                  @name = name
-                end
+                include AbstractFormElementWrapper
 
                 def ole
                   @ole ||= form_wrapper.Items.send(name)
-                end
-
-                def method_missing(m, *a)
-                  ole.send(m, *a)
                 end
 
                 def item_srv_prop_get(item, prop)
@@ -321,7 +343,7 @@ module AssDevel
               alias_method :[], :column
 
               def data_source
-                form_wrapper.send(data_path)
+                form_wrapper.attribute(data_path)
               end
             end
 
@@ -390,6 +412,18 @@ module AssDevel
           def click(button)
             widgets.button.send(button).click
           end
+
+          # @return attribute wrapper
+          def attribute(name)
+            klass = recognize_attr_class(name)
+            wrapp_("attribute_#{klass}".to_sym, name)
+          end
+
+          # @todo Implemnts this
+          def recognize_attr_class(name)
+            :generic
+          end
+          private :recognize_attr_class
         end
       end
     end
