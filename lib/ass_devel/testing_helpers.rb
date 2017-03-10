@@ -241,11 +241,26 @@ module AssDevel
               include AbstractFormElementWrapper
 
               def ole
-                @ole ||= form_wrapper.send(name)
+                @ole ||= ole_get
               end
 
+              # If attribute is structure like Object.Property
+              def ole_get
+                r = form_wrapper
+                name.split('.').each do |m|
+                  break unless r.send(m).is_a? WIN32OLE
+                  r = r.send(m)
+                end
+                r
+              end
+              private :ole_get
+
               def attr_srv_prop_get(attr_, prop)
-                server.prop.send(attr_).send(prop).get
+                r = server.prop
+                attr_.split('.').each do |m|
+                  r = r.send(m)
+                end
+                r.send(attr_).send(prop).get
               end
               private :attr_srv_prop_get
 
