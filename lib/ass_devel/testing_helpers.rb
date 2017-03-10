@@ -224,7 +224,8 @@ module AssDevel
             end
 
             def method_missing(m, *a)
-              return ole.send(m, *a) if a.size > 0 or ole.ole_respond_to? m
+              return ole.send(m, *a) if\
+                m.to_s =~ %r{=\s+\z} or a.size > 0 or ole.ole_respond_to? m
               srv_prop_get(m)
             end
 
