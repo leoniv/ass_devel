@@ -223,10 +223,6 @@ module AssDevel
               fail 'Abstract method call'
             end
 
-            def method_missing(m, *a)
-              ole.send(m, *a)
-            end
-
             def server
               form_wrapper.server
             end
@@ -242,6 +238,11 @@ module AssDevel
 
               def ole
                 @ole ||= ole_get
+              end
+
+              def method_missing(m, *a)
+                return ole.send(m, *a) if m.to_s =~ %r{=\s+\z} or a.size > 0
+                srv_prop_get(m)
               end
 
               # If attribute is structure like Object.Property
@@ -260,7 +261,7 @@ module AssDevel
                 attr_.split('.').each do |m|
                   r = r.send(m)
                 end
-                r.send(attr_).send(prop).get
+                r.send(prop).get
               end
               private :attr_srv_prop_get
 
@@ -308,6 +309,10 @@ module AssDevel
 
                 def ole
                   @ole ||= form_wrapper.Items.send(name)
+                end
+
+                def method_missing(m, *a)
+                  ole.send(m, *a)
                 end
 
                 def item_srv_prop_get(item, prop)
