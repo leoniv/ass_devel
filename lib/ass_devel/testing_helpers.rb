@@ -184,8 +184,12 @@ module AssDevel
                 ProperyGetter.new(self)
               end
 
+              def call(string, *args)
+                wrapper.gate_way._test_eval_on_server(wrapper.ole, string, **to_hash(*args))
+              end
+
               def method_missing(method, *args)
-                wrapper.gate_way._test_eval_on_server(wrapper.ole, method, **to_hash(*args))
+                call(method.to_s, *args)
               end
             end
 
@@ -335,7 +339,7 @@ module AssDevel
 
                 module GetAction
                   def get_action(action)
-                    server.GetAction(action)
+                    server.call("Items.#{name}.GetAction", action)
                   end
 
                   def exec_action(action, *args)
