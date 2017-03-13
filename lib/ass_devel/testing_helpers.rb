@@ -337,6 +337,10 @@ module AssDevel
                   def get_action(action)
                     server.GetAction(action)
                   end
+
+                  def exec_action(action, *args)
+                    client.send(get_action(action), *args)
+                  end
                 end
               end
             end
