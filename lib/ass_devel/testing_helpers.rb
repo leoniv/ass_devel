@@ -184,10 +184,12 @@ module AssDevel
                 ProperyGetter.new(self)
               end
 
+              # Call long form method like Items.ItemName.GetAction('action_name')
               def call(string, *args)
                 wrapper.gate_way._test_eval_on_server(wrapper.ole, string, **to_hash(*args))
               end
 
+              # Call short form method GetAction('action_name')
               def method_missing(method, *args)
                 call(method.to_s, *args)
               end
