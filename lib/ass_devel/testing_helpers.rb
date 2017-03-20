@@ -1235,6 +1235,60 @@ module AssDevel
         end
       end
 
+      module RuntimeClones
+        def self.new(ole_runtime, user, pass = nil)
+          clones.find {|cl| cl.ole_runtime == ole_runtime && cl.user == user} ||\
+            Clone.new(ole_runtime, user, pass)
+        end
+
+        def self.clones
+          @clones ||= []
+        end
+
+        class Clone
+          include AssLauncher::Api
+
+          attr_reader :ole_runtime, :user, :pass
+          def initialize(ole_runtime, user, pass = nil)
+            @ole_runtime = ole_runtime
+            @user = user
+            @pass = pass
+            RuntimeClones.clones << self
+          end
+
+          def clone
+            ole_type = ole_runtime.ole_type
+            @clone ||= Module.new do
+              is_ole_runtime ole_type
+            end
+          end
+
+          def run
+            clone.run infobase
+          end
+
+          def stop
+            clone.stop
+          end
+
+          def infobase
+            @infobase ||= AssTests::InfoBases::InfoBase
+              .new("clone#{hash}", conn_str)
+          end
+
+          def conn_str
+            @conn_str || conn_str_get
+          end
+
+          def conn_str_get
+            r = cs(ole_runtime.ole_connector.InfoBaseConnectionString)
+            r.usr = user
+            r.pwd = pass
+            r
+          end
+        end
+      end
+
       def self.proxy(srv_runtime, real_runtime)
         Proxy.new(srv_runtime, real_runtime)
       end
@@ -1603,6 +1657,24 @@ module AssDevel
 
           define_method :at_server do |*args, &block|
             fixtures.at_server_do self, *args, &block
+          end
+
+          define_method :connect_as do |user, *args, &block|
+            begin
+              clone = RuntimeClones.new(ole_runtime_get, user)
+              clone.run
+              args_ = args.map {|a| fixtures.proxy.to_srv a}
+              self.class.like_ole_runtime clone.clone
+              fixtures.proxy.real_runtime.like_ole_runtime clone.clone
+              args_ = args_.map {|a| fixtures.proxy.to_real a}
+              block.yield *args_
+            ensure
+              if clone
+                clone.stop
+                fixtures.proxy.real_runtime.like_ole_runtime clone.ole_runtime
+                self.class.like_ole_runtime clone.ole_runtime
+              end
+            end
           end
         end
       end
