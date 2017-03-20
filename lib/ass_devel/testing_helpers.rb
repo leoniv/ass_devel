@@ -341,7 +341,7 @@ module AssDevel
 
                 module GetAction
                   def get_action(action)
-                    server.call("Items.#{name}.GetAction", action)
+                    server.call("Items.#{name}.GetAction", action.to_s)
                   end
 
                   def exec_action(action, *args)
