@@ -1498,7 +1498,7 @@ module AssDevel
         private :real_value
 
         def teardown(name, &block)
-          return auto_teardown unless block_given?
+          return auto_teardown name unless block_given?
           _teardown(name, &block)
         end
         alias_method :rm, :teardown
