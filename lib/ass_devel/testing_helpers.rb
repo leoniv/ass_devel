@@ -1281,14 +1281,22 @@ module AssDevel
 
           def infobase
             @infobase ||= AssTests::InfoBases::InfoBase
-              .new("clone#{hash}", conn_str)
+              .new("clone#{hash}", conn_str, platform_require: platform_require)
+          end
+
+          def platform_require
+            @platform_require ||= "= #{app_version}"
+          end
+
+          def app_version
+            ole_runtime.ole_connector.newObject('SystemInfo').AppVersion
           end
 
           def conn_str
             @conn_str || conn_str_get
           end
 
-          def conn_str_get
+          def conn_str_ get
             r = cs(ole_runtime.ole_connector.InfoBaseConnectionString)
             r.usr = user
             r.pwd = pass
