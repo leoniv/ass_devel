@@ -1687,8 +1687,8 @@ module AssDevel
 
           define_method :connect_with do |roles, *args, &block|
             user = :"user_connect_with_#{roles.hash.abs}"
-            fixt_let(user, :object_delete) do
-              at_server do
+            at_server do
+              fixt_let(user, :object_delete) do
                 u = infoBaseUsers.CreateUser
                 u.Name = user
                 u.FullName = "Fake User #{user}"
@@ -1702,7 +1702,9 @@ module AssDevel
             begin
               connect_as(user, *args, &block)
             ensure
-              fixtures.rm user
+              at_server do
+                fixtures.rm user
+              end
             end
           end
         end
