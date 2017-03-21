@@ -322,7 +322,7 @@ module AssDevel
                 end
 
                 def column(name)
-                  windget.column(name)
+                  widget.column(name)
                 end
                 private :column
 
