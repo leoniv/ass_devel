@@ -379,7 +379,7 @@ module AssDevel
 
               # All table fields releted with {#data_path}
               def columns
-                fields.find do |f|
+                fields.select do |f|
                   f.data_path =~ %r{#{data_path.gsub('.','\.')}\.\S+}
                 end
               end
