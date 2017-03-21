@@ -318,7 +318,7 @@ module AssDevel
 
                 def method_missing(m, *args)
                   fail NoMethodError, m.to_s unless column(m)
-                  get(column(name))
+                  get(column(m))
                 end
 
                 def column(name)
