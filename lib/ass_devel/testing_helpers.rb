@@ -496,7 +496,7 @@ module AssDevel
 
                 def value
                   return nil unless form_table.current_row
-                  form_table.current_row self
+                  form_table.current_row.send(:get, self)
                 end
               end
 
