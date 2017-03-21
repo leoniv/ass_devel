@@ -362,6 +362,7 @@ module AssDevel
               include Abstract::ItHas::DataPath
               include Abstract::ItHas::GetAction
 
+              # All +FormField+ type's table fields
               def fields
                 @fields ||= fields_get
               end
@@ -376,9 +377,16 @@ module AssDevel
               end
               private :fields_get
 
-              def column(coll)
+              # All table fields releted with {#data_path}
+              def columns
                 fields.find do |f|
-                  f.data_path == "#{data_path}.#{coll}"
+                  f.data_path =~ "#{data_path}\.\S+"
+                end
+              end
+
+              def column(coll)
+                columns.find do |f|
+                  f.Name =~ %r{\A#{coll}\z}i
                 end
               end
               alias_method :[], :column
