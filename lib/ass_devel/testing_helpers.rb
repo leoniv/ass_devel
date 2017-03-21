@@ -338,6 +338,12 @@ module AssDevel
                 def data_source
                   widget.data_source
                 end
+
+                def select(name)
+                  fail ArgumentError, "Invalud column #{name}" unless column(name)
+                  widget.CurrentItem = column(name).ole
+                  column(name)
+                end
               end
 
               def rows_get(widget)
@@ -475,11 +481,16 @@ module AssDevel
               alias_method :[], :column
 
               def rows
-                @rows ||= data_source.rows_get(self)
+                data_source.rows_get(self)
               end
 
               def count
                 data_source.Count
+              end
+
+              # Select row
+              def select(index)
+                rows[ole.CurrentRow = index]
               end
             end
 
