@@ -272,12 +272,27 @@ module AssDevel
                 @ole ||= ole_get
               end
 
+              def fnames
+                @fnames ||= []
+              end
+
+              def lnames
+                @lnames ||= name.split('.')
+              end
+
+              def last_name
+                lnames.join('.')
+              end
+
               # If attribute is structure like Object.Property
               def ole_get
                 r = form_wrapper
-                name.split('.').each do |m|
+                lnames.size.times do |i|
+                  m = lnames[i]
+                  break unless r.ole_respond_to? m
                   break unless r.send(m).is_a? WIN32OLE
                   r = r.send(m)
+                  fnames << lnames.shift
                 end
                 r
               end
@@ -296,6 +311,11 @@ module AssDevel
                 attr_srv_prop_get(name, prop)
               end
               alias_method :[], :srv_prop_get
+
+              def value
+                return ole if lnames.size == 0
+                srv_prop_get(last_name)
+              end
             end
 
             class Generic < Abstract
@@ -447,6 +467,19 @@ module AssDevel
             end
 
             class Formtable
+              class Field < Formfield
+                attr_reader :form_table
+                def initialize(form_wrapper, name, form_table)
+                  super form_wrapper, name
+                  @form_table = form_table
+                end
+
+                def data_source
+                  # FIXME: form_table.
+                  fail NotImplementedError
+                end
+              end
+
               include Abstract::Item
               include Abstract::ItHas::DataPath
               include Abstract::ItHas::GetAction
@@ -459,7 +492,7 @@ module AssDevel
               def fields_get
                 r = []
                 ole.ChildItems.each do |item|
-                  r << form_wrapper.widget(:formfield, item.Name) if\
+                  r << Field.new(form_wrapper, item.Name, self) if\
                     item.ole_respond_to?(:WarningOnEditRepresentation)
                 end
                 r
