@@ -247,11 +247,13 @@ module AssDevel
           module Attribute
 
             def self.new(form_wrapper, name)
-              attr_class(form_wrapper, name).new(form_wrapper, name)
+              abs_attr = Attribute::Abstract.new(form_wrapper, name)
+              klass = attr_class(abs_attr)
+              return abs_attr unless klass
+              klass.new(form_wrapper, name)
             end
 
-            def self.attr_class(form_wrapper, name)
-              abs_attr = Attribute::Abstract.new(form_wrapper, name)
+            def self.attr_class(abs_attr)
               return FormAttribute if\
                 abs_attr.ole.ole_respond_to? :FormName
               return DynamicList if\
@@ -264,7 +266,6 @@ module AssDevel
                 (abs_attr.ole.ole_respond_to?(:Property) && !abs_attr.ole.ole_respond_to?(:Delete))
               return FormDataTree if\
                 (abs_attr.ole.ole_respond_to? :GetItems)
-              Generic
             end
 
             class Abstract
@@ -316,12 +317,13 @@ module AssDevel
                 attr_srv_prop_get(name, prop)
               end
               alias_method :[], :srv_prop_get
+
+              def value
+                nil
+              end
             end
 
-            class Generic < Abstract
-            end
-
-            class FormAttribute
+            class FormAttribute < Abstract
               def value
                 ole
                 return ole if lnames.size == 0
@@ -454,6 +456,10 @@ module AssDevel
                   def data_source
                     form_wrapper.attribute(data_path)
                   end
+
+                  def value
+                    data_source.value
+                  end
                 end
 
                 module GetAction
@@ -483,8 +489,12 @@ module AssDevel
                 end
 
                 def data_source
-                  # FIXME: form_table.
-                  fail NotImplementedError
+                  nil
+                end
+
+                def value
+                  return nil unless form_table.current_row
+                  form_table.current_row self
                 end
               end
 
@@ -532,6 +542,11 @@ module AssDevel
               # Select row
               def select(index)
                 rows[ole.CurrentRow = index]
+              end
+
+              def current_row
+                return unless ole.CurrentRow
+                rows[ole.CurrentRow]
               end
             end
 
