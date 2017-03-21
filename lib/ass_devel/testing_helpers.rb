@@ -318,7 +318,7 @@ module AssDevel
               def value
                 ole
                 return ole if lnames.size == 0
-                return send(last_name) if.last_name.size == 1
+                return send(last_name) if last_name.size == 1
                 srv_prop_get(last_name)
               end
             end
