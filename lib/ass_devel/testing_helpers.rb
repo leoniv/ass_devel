@@ -1702,7 +1702,7 @@ module AssDevel
             begin
               connect_as(user, *args, &block)
             ensure
-              fixtures.rm user
+              fixtures.rm user if fixtures.respond_to? user
             end
           end
         end
