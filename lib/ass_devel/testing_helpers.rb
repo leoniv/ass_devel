@@ -287,10 +287,7 @@ module AssDevel
               # If attribute is structure like Object.Property
               def ole_get
                 r = form_wrapper
-                lnames.size.times do |i|
-                  m = lnames[i]
-                  break unless r.ole_respond_to? m.to_sym
-                  break unless r.send(m).is_a? WIN32OLE
+                while r.ole_respond_to?(m.to_sym) && r.send(m).is_a?(WIN32OLE)
                   r = r.send(m)
                   fnames << lnames.shift
                 end
