@@ -254,7 +254,7 @@ module AssDevel
               abs_attr = Attribute::Abstract.new(form_wrapper, name)
               return DynamicList if\
                 abs_attr.ole.ole_respond_to? :QueryText
-              return FormdataCollection if\
+              return FormDataCollection if\
                 (!abs_attr.ole.ole_respond_to?(:Property) && abs_attr.ole.ole_respond_to?(:Delete))
               return FormDataStructureAndCollection if\
                 (abs_attr.ole.ole_respond_to?(:Property) && abs_attr.ole.ole_respond_to?(:Delete))
