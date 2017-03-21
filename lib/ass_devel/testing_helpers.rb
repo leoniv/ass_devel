@@ -303,15 +303,52 @@ module AssDevel
             end
 
             class DynamicList < Abstract
-
+              def rows_get(widget)
+                fail NotImplementedError
+              end
             end
 
             class FormDataCollection < Abstract
+              class Row
+                attr_reader :widget, :index
+                def initialize(widget, index)
+                  @index = index
+                  @widget = widget
+                end
 
+                def method_missing(m, *args)
+                  fail NoMethodError, m.to_s unless column(m)
+                  get(column(name))
+                end
+
+                def column(name)
+                  windget.column(name)
+                end
+                private :column
+
+                def get(column)
+                  ole.send(column.data_path.split('.').last)
+                end
+                private :get
+
+                def ole
+                  data_source.Get(index)
+                end
+              end
+
+              def rows_get(widget)
+                r = []
+                Count().times do |index|
+                  Row.new(widget, index)
+                end
+                r
+              end
             end
 
             class FormDataStructureAndCollection < Abstract
-
+              def rows_get(widget)
+                fail NotImplementedError
+              end
             end
 
             class FormDataStructure < Abstract
@@ -319,7 +356,9 @@ module AssDevel
             end
 
             class FormDataTree < Abstract
-
+              def rows_get(widget)
+                fail NotImplementedError
+              end
             end
           end
 
@@ -432,11 +471,11 @@ module AssDevel
               alias_method :[], :column
 
               def rows
-                @rows ||= rows_get
+                @rows ||= data_source.rows_get(self)
               end
 
-              def rows_get
-                fail 'FIXME'
+              def count
+                data_source.Count
               end
             end
 
