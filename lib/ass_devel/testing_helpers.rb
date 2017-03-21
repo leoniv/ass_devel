@@ -339,7 +339,7 @@ module AssDevel
               def rows_get(widget)
                 r = []
                 Count().times do |index|
-                  Row.new(widget, index)
+                  r << Row.new(widget, index)
                 end
                 r
               end
