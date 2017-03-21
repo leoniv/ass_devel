@@ -334,6 +334,10 @@ module AssDevel
                 def ole
                   data_source.Get(index)
                 end
+
+                def data_source
+                  widget.data_source
+                end
               end
 
               def rows_get(widget)
