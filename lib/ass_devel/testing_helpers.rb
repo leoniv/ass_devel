@@ -258,9 +258,9 @@ module AssDevel
                 (!abs_attr.ole.ole_respond_to?(:Property) && abs_attr.ole.ole_respond_to?(:Delete))
               return FormDataStructureAndCollection if\
                 (abs_attr.ole.ole_respond_to?(:Property) && abs_attr.ole.ole_respond_to?(:Delete))
-              return if FormDataStructure\
+              return FormDataStructure if\
                 (abs_attr.ole.ole_respond_to?(:Property) && !abs_attr.ole.ole_respond_to?(:Delete))
-              return if FormDataTree\
+              return FormDataTree if\
                 (abs_attr.ole.ole_respond_to? :GetItems)
               Generic
             end
