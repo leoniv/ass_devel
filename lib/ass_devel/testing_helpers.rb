@@ -1702,9 +1702,7 @@ module AssDevel
             begin
               connect_as(user, *args, &block)
             ensure
-              at_server do
-                fixtures.rm user
-              end
+              fixtures.rm user
             end
           end
         end
