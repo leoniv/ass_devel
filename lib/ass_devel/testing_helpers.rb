@@ -1296,7 +1296,7 @@ module AssDevel
             @conn_str || conn_str_get
           end
 
-          def conn_str_ get
+          def conn_str_get
             r = cs(ole_runtime.ole_connector.InfoBaseConnectionString)
             r.usr = user
             r.pwd = pass
