@@ -284,15 +284,15 @@ module AssDevel
                 lnames.join('.')
               end
 
-              def curr_name
-                lnames.first
+              def curr_method
+                lnames.first.to_sym
               end
 
               # If attribute is structure like Object.Property
               def ole_get
                 r = form_wrapper
-                while r.ole_respond_to?(curr_name) && r.send(curr_name).is_a?(WIN32OLE)
-                  r = r.send(curr_name)
+                while r.ole_respond_to?(curr_method) && r.send(curr_method).is_a?(WIN32OLE)
+                  r = r.send(curr_method)
                   fnames << lnames.shift
                 end
                 r
