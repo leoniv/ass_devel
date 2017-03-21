@@ -245,6 +245,26 @@ module AssDevel
           end
 
           module Attribute
+
+            def self.new(form_wrapper, name)
+              attr_class(form_wrapper, name).new(form_wrapper, name)
+            end
+
+            def self.attr_class(form_wrapper, name)
+              abs_attr = Attribute::Abstract.new(form_wrapper, name)
+              return DynamicList if\
+                abs_attr.ole.ole_respond_to? :QueryText
+              return FormdataCollection if\
+                (!abs_attr.ole.ole_respond_to?(:Property) && abs_attr.ole.ole_respond_to?(:Delete))
+              return FormDataStructureAndCollection if\
+                (abs_attr.ole.ole_respond_to?(:Property) && abs_attr.ole.ole_respond_to?(:Delete))
+              return if FormDataStructure\
+                (abs_attr.ole.ole_respond_to?(:Property) && !abs_attr.ole.ole_respond_to?(:Delete))
+              return if FormDataTree\
+                (abs_attr.ole.ole_respond_to? :GetItems)
+              Generic
+            end
+
             class Abstract
               include AbstractFormElementWrapper
 
@@ -279,6 +299,26 @@ module AssDevel
             end
 
             class Generic < Abstract
+
+            end
+
+            class DynamicList < Abstract
+
+            end
+
+            class FormDataCollection < Abstract
+
+            end
+
+            class FormDataStructureAndCollection < Abstract
+
+            end
+
+            class FormDataStructure < Abstract
+
+            end
+
+            class FormDataTree < Abstract
 
             end
           end
@@ -390,6 +430,14 @@ module AssDevel
                 end
               end
               alias_method :[], :column
+
+              def rows
+                @rows ||= rows_get
+              end
+
+              def rows_get
+                fail 'FIXME'
+              end
             end
 
             class Button
@@ -468,8 +516,7 @@ module AssDevel
 
           # @return attribute wrapper
           def attribute(name)
-            klass = recognize_attr_class(name)
-            wrapp_("attribute_#{klass}".to_sym, name)
+            Attribute.new(self, name)
           end
           alias_method :[], :attribute
 
@@ -497,12 +544,6 @@ module AssDevel
             end.new(self)
           end
           alias_method :atr, :attributes
-
-          # @todo Implemnts this
-          def recognize_attr_class(name)
-            :generic
-          end
-          private :recognize_attr_class
         end
       end
     end
