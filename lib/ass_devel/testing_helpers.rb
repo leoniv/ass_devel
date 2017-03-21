@@ -266,6 +266,8 @@ module AssDevel
                 (abs_attr.ole.ole_respond_to?(:Property) && !abs_attr.ole.ole_respond_to?(:Delete))
               return FormDataTree if\
                 (abs_attr.ole.ole_respond_to? :GetItems)
+              return FormAttribute if\
+                abs_attr.lnames.size == 0
             end
 
             class Abstract
@@ -293,7 +295,7 @@ module AssDevel
 
               # If attribute is structure like Object.Property
               def ole_get
-                r = form_wrapper
+                r = form_wrapper.ole
                 while curr_method &&\
                     r.ole_respond_to?(curr_method) &&\
                     r.send(curr_method).is_a?(WIN32OLE)
@@ -327,7 +329,7 @@ module AssDevel
               def value
                 ole
                 return ole if lnames.size == 0
-                return send(last_name) if last_name.size == 1
+                return send(last_name) if lnames.size == 1
                 srv_prop_get(last_name)
               end
             end
