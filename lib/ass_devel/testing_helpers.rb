@@ -1690,7 +1690,7 @@ module AssDevel
             at_server do
               fixt_let(user, :object_delete) do
                 u = infoBaseUsers.CreateUser
-                u.Name = user
+                u.Name = "#{user}"
                 u.FullName = "Fake User #{user}"
                 roles.each do |r|
                   u.Roles.Add metaData.Roles.send(r)
