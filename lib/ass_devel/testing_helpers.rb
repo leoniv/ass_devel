@@ -285,13 +285,15 @@ module AssDevel
               end
 
               def curr_method
-                lnames.first.to_sym
+                lnames.first
               end
 
               # If attribute is structure like Object.Property
               def ole_get
                 r = form_wrapper
-                while r.ole_respond_to?(curr_method) && r.send(curr_method).is_a?(WIN32OLE)
+                while curr_method &&\
+                    r.ole_respond_to?(curr_method) &&\
+                    r.send(curr_method).is_a?(WIN32OLE)
                   r = r.send(curr_method)
                   fnames << lnames.shift
                 end
@@ -314,7 +316,9 @@ module AssDevel
               alias_method :[], :srv_prop_get
 
               def value
+                ole
                 return ole if lnames.size == 0
+                return send(last_name) if.last_name.size == 1
                 srv_prop_get(last_name)
               end
             end
