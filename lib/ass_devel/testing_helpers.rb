@@ -252,6 +252,8 @@ module AssDevel
 
             def self.attr_class(form_wrapper, name)
               abs_attr = Attribute::Abstract.new(form_wrapper, name)
+              return FormAttribute if\
+                abs_attr.ole.ole_respond_to? :FormName
               return DynamicList if\
                 abs_attr.ole.ole_respond_to? :QueryText
               return FormDataCollection if\
@@ -314,17 +316,18 @@ module AssDevel
                 attr_srv_prop_get(name, prop)
               end
               alias_method :[], :srv_prop_get
+            end
 
+            class Generic < Abstract
+            end
+
+            class FormAttribute
               def value
                 ole
                 return ole if lnames.size == 0
                 return send(last_name) if last_name.size == 1
                 srv_prop_get(last_name)
               end
-            end
-
-            class Generic < Abstract
-
             end
 
             class DynamicList < Abstract
@@ -386,7 +389,7 @@ module AssDevel
               end
             end
 
-            class FormDataStructure < Abstract
+            class FormDataStructure < FormAttribute
 
             end
 
