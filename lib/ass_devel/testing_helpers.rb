@@ -401,6 +401,13 @@ module AssDevel
               end
             end
 
+            # Abstract form collection attribute item
+            module AbstractCollectionItem
+              def index
+                fail NotImplementedError
+              end
+            end
+
             # Wrapper for generic attribute
             class FormAttribute < Abstract
               def value
@@ -419,7 +426,11 @@ module AssDevel
             # Wrapper for +FormDataCollection+ attribute
             class FormDataCollection < Abstract
               include AbstractCollection
+              # Wrapper for +FormDataCollectionItem+
+              # It make possable get row property value per widget
+              # column name
               class Row
+                include AbstractCollectionItem
                 attr_reader :widget, :index
                 def initialize(widget, index)
                   @index = index
@@ -427,8 +438,8 @@ module AssDevel
                 end
 
                 def method_missing(m, *args)
-                  fail NoMethodError, m.to_s unless column(m)
-                  get(column(m))
+                  return get(column(m)) if column(m)
+                  ole.send(m, *args)
                 end
 
                 def column(name)
