@@ -1997,6 +1997,15 @@ module AssDevel
               fixtures.rm user if fixtures.respond_to? user
             end
           end
+
+          # Add exists value for access and teardown
+          define_method :fixt_add do |value, name, teardown_do = nil|
+            at_server value do |srv_value|
+              fixt_let(name, teardown_do) do
+                srv_value
+              end
+            end
+          end
         end
       end
     end
