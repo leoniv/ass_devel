@@ -125,6 +125,13 @@ module AssDevel
               @private ||= Context.new(self)
             end
           end
+
+          module CallBack
+            # Call +NotifyDescription+ callback
+            def callback(notify_description, *args)
+              send(notify_description.ProcedureName, *args)
+            end
+          end
         end
 
         # @todo (see Wrappers)
@@ -140,6 +147,10 @@ module AssDevel
           def wrapp_module(ole_module)
             Module.new(ole_module, ole_runtime_get)
           end
+
+          def wrapp_callback(notify_description)
+            NotifyDescription.new(notify_description, ole_runtime_get)
+          end
         end
 
         # Wrappers for ManagerModule and ObjectModule and CommomModule
@@ -153,6 +164,15 @@ module AssDevel
         class Module
           include Abstract::Wrapper
           include Abstract::PrivateContext
+          include Abstract::CallBack
+        end
+
+        class NotifyDescription
+          include Abstract::Wrapper
+
+          def call(*args)
+            ole.Module.send(ole.ProcedureName, *args)
+          end
         end
 
         # Wrapper for 1C ManagedForm
@@ -165,6 +185,7 @@ module AssDevel
         #  form.private.private_method #=> value
         class Form
           include Abstract::Wrapper
+          include Abstract::CallBack
 
           # Form clien and serever contexts gateway for call private methods
           # and get property values from server side of form
