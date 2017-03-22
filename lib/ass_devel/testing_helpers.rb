@@ -142,15 +142,48 @@ module AssDevel
           end
         end
 
+        # Wrappers for ManagerModule and ObjectModule and CommomModule
+        # Provides easy access to private context of module
+        # @exaple
+        #  like_ole_runtime Runtimes::External
+        #  include AssDevel::TestingHelpers::TestGateWay::Wrappers::DSL
+        #  # module have private_method()
+        #  module = wrapp_module commomModuleName
+        #  module.private.private_method #=> value
         class Module
           include Abstract::Wrapper
           include Abstract::PrivateContext
         end
 
+        # Wrapper for 1C ManagedForm
+        # Provides easy access to private form's module context and one more
+        # @exaple
+        #  like_ole_runtime Runtimes::Thin
+        #  include AssDevel::TestingHelpers::TestGateWay::Wrappers::DSL
+        #  # Form module have private_method()
+        #  form = wrapp_form 'CommonForm.FormName'
+        #  form.private.private_method #=> value
         class Form
           include Abstract::Wrapper
+
+          # Form clien and serever contexts gateway for call private methods
+          # and get property values from server side of form
           module Context
+            # Form serever context gateway
+            # @exmple
+            #  # form hase private_method() server side method
+            #  # call method
+            #  form.server.private_method #=> value
+            #
+            #  # form hase server side property
+            #  # get property value
+            #  form.prop.Long.Prop.Name.get #=> value
+            #
+            #  # form hase serever side property method
+            #  # call property method
+            #  form.call('PropertyName.Method' *args) #=> value
             class Server < Abstract::PrivateContext::Context
+              # Instnace for get property value from serever side
               class ProperyGetter
                 attr_reader :context
                 def initialize(context)
@@ -169,6 +202,10 @@ module AssDevel
                 end
                 private :name
 
+                # Pull property value from serever side
+                # @exmple
+                #  form.prop.Long.Prop.Name.OnServer.get #=> vlue
+                # @return [ProperyGetter] instance
                 def get
                   context.wrapper.gate_way._test_property_get context.wrapper.ole, name
                 end
@@ -180,6 +217,10 @@ module AssDevel
                 end
               end
 
+              # Pull property value from serever side
+              # @exmple
+              #  form.prop.Long.Prop.Name.OnServer.get #=> vlue
+              # @return [ProperyGetter] instance
               def prop
                 ProperyGetter.new(self)
               end
@@ -195,9 +236,11 @@ module AssDevel
               end
             end
 
+            # Form clien context gateway
             class Client < Abstract::PrivateContext::Context; end
           end
 
+          # Dynamically generate wrpper instance
           def self.method_missing(m, *a)
             split = m.to_s.split('_')
             fail NoMethodError, "undefined method `#{m}' for #{self.name}" if\
@@ -218,6 +261,7 @@ module AssDevel
             Context::Client.new(self)
           end
 
+          # Abstract widget or attribute wrapper
           module AbstractFormElementWrapper
             attr_reader :form_wrapper, :name
             def initialize(form_wrapper, name)
@@ -244,8 +288,10 @@ module AssDevel
             end
           end
 
+          # Define of 1C ManagedForm attributes (aka requisites) wrappers
           module Attribute
-
+            # Return suitable attribute wrapper instance. Class of instance
+            # calculates in {.attr_class}
             def self.new(form_wrapper, name)
               abs_attr = Attribute::Abstract.new(form_wrapper, name)
               klass = attr_class(abs_attr)
@@ -253,6 +299,7 @@ module AssDevel
               klass.new(form_wrapper, name)
             end
 
+            # Calculate suitable attribute wrapper class
             def self.attr_class(abs_attr)
               return FormAttribute if\
                 abs_attr.ole.ole_respond_to? :FormName
@@ -270,25 +317,33 @@ module AssDevel
                 abs_attr.lnames.size == 0
             end
 
+            # Abstract attribute wrapper
             class Abstract
               include AbstractFormElementWrapper
 
+              # Return calculated per widget +DataPath+, +Ole+ object.
+              # For more info see private method {#ole_get}
+              # @return [WIN32OLE]
               def ole
                 @ole ||= ole_get
               end
 
+              # Uses for calculate {#ole} and {#value}
               def fnames
                 @fnames ||= []
               end
 
+              # Uses for calculate {#ole} and {#value}
               def lnames
                 @lnames ||= name.split('.')
               end
 
+              # Uses for calculate {#ole} and {#value}
               def last_name
                 lnames.join('.')
               end
 
+              # Uses for calculate {#ole} and {#value}
               def curr_method
                 lnames.first
               end
@@ -315,16 +370,38 @@ module AssDevel
               end
               private :attr_srv_prop_get
 
+              # Return property value from serever side of form
               def srv_prop_get(prop)
                 attr_srv_prop_get(name, prop)
               end
               alias_method :[], :srv_prop_get
 
+              # Return current attribute value
+              # But not always possible do it
+              # On default returns nil
+              # @return [nil]
               def value
                 nil
               end
             end
 
+            # Abstract extension for attribute which is collection
+            module AbstractCollection
+              # Must returns array of row wrappers
+              # @return [Array]
+              def rows_get(widget)
+                fail NotImplementedError
+              end
+
+              # Must return collection size or nil if getting collection size
+              # unpossible
+              # @return [Fixnum nil]
+              def count
+                fail NotImplementedError
+              end
+            end
+
+            # Wrapper for generic attribute
             class FormAttribute < Abstract
               def value
                 ole
@@ -334,13 +411,14 @@ module AssDevel
               end
             end
 
+            # Wrapper for +DynamicList+ attribute
             class DynamicList < Abstract
-              def rows_get(widget)
-                fail NotImplementedError
-              end
+              include AbstractCollection
             end
 
+            # Wrapper for +FormDataCollection+ attribute
             class FormDataCollection < Abstract
+              include AbstractCollection
               class Row
                 attr_reader :widget, :index
                 def initialize(widget, index)
@@ -385,29 +463,33 @@ module AssDevel
                 end
                 r
               end
-            end
 
-            class FormDataStructureAndCollection < Abstract
-              def rows_get(widget)
-                fail NotImplementedError
+              # @return [Fixnum]
+              def count
+                Count()
               end
             end
 
+            # Wrapper for +FormDataStructureAndCollection+ attribute
+            class FormDataStructureAndCollection < Abstract
+              include AbstractCollection
+            end
+
+            # Wrapper for +FormDataStructure+ attribute
             class FormDataStructure < FormAttribute
 
             end
 
+            # Wrapper for +FormDataTree+ attribute
             class FormDataTree < Abstract
-              def rows_get(widget)
-                fail NotImplementedError
-              end
+              include AbstractCollection
             end
           end
 
           # Define of 1C ManagedForm Widgets wrappers
           # Winget class hase name restriction. Name of class mustn't be
           # cammel-case. Class name +FormField+ is wrong but +Formfield+ is
-          # good. Restriction caused by dinamicaly generated {Form}
+          # good. Restriction caused by dinamically generated {Form}
           # interface. {Form.method_missing} translate +wrapp_*+ methods to a
           # class name, example +Form.wrapp_widget_formfield+ or
           # +Form.wrapp_(:widget_formfield+ returns {Form::Widgets::Formfield}
@@ -432,6 +514,7 @@ module AssDevel
           #   end
           module Widget
             module Abstract
+              # Abstract widget wrapper
               module Item
                 include AbstractFormElementWrapper
 
@@ -450,20 +533,29 @@ module AssDevel
               end
 
               module ItHas
+                # Wrappers for widgets which has +DataPath+ method
                 module DataPath
+                  # Wrapper for Ole +DataPath+ method
+                  # @return [String]
                   def data_path
                     srv_prop_get :DataPath
                   end
 
+                  # Return wrapper for form attribute wich is the data source
+                  # for widget
+                  # @return suitable instance of +Attribute+ wrappers
                   def data_source
                     form_wrapper.attribute(data_path)
                   end
 
+                  # Return current value of widget {#data_source}
+                  # @return dependence of {#data_source} type
                   def value
                     data_source.value
                   end
                 end
 
+                # Wrappers for widgets which has +GetAction+ method
                 module GetAction
                   def get_action(action)
                     server.call("Items.#{name}.GetAction", action.to_s)
@@ -476,13 +568,16 @@ module AssDevel
               end
             end
 
+            # Wrapper for +FormField+ widget
             class Formfield
               include Abstract::Item
               include Abstract::ItHas::DataPath
               include Abstract::ItHas::GetAction
             end
 
+            # Wrapper for +FormTable+ widget
             class Formtable
+              # Extension for +FormField+ widget which inclded into {Formtable}
               class Field < Formfield
                 attr_reader :form_table
                 def initialize(form_wrapper, name, form_table)
@@ -537,21 +632,46 @@ module AssDevel
                 data_source.rows_get(self)
               end
 
+              # Result dependence of {#data_source} wrapper
+              # @return [Fixnum nil]
               def count
-                data_source.Count
+                data_source.count
               end
 
-              # Select row
-              def select(index)
+              # Select row per index or conditions
+              # If using &conditions first row will be selected
+              # @return row wrapper instance or nil
+              def select(index = nil, &conditions)
+                return select_per_index(index) if index
+                select_per_conditions(&conditions)
+              end
+
+              # Select row per conditions
+              # Only first row will be selected
+              # @return row wrapper instance or nil
+              def select_per_conditions(&conditions)
+                fail ArgumentError unless block_given?
+                row = rows.find(&conditions)
+                return unless row
+                select_per_index(row.index)
+              end
+
+              # Select row per index
+              # @return row wrapper instance or nil
+              def select_per_index(index)
+                return unless index
                 rows[ole.CurrentRow = index]
               end
 
+              # Return row wrapper for +CurrentRow+ of table
+              # @return row wrapper instance
               def current_row
                 return unless ole.CurrentRow
                 rows[ole.CurrentRow]
               end
             end
 
+            # Wrapper for +FormButton+ widget
             class Button
               include Abstract::Item
 
@@ -569,7 +689,7 @@ module AssDevel
             end
           end
 
-          # Dinamicaly generate Wrappers::Form*
+          # Dinamically generate Wrappers::Form*
           # We cant't use +#method_missing+ because +#method_missing+
           # forward messages into {#ole} object
           # @exmple
@@ -579,14 +699,14 @@ module AssDevel
               .send("wrapp_#{what}", *args.unshift(self))
           end
 
-          # Dinamicaly generate Wrappers::Form::Widgets*
+          # Dinamically generate Wrappers::Form::Widgets*
           # @exaple
           #   form.widget(:button, :ButtonName).click
           def widget(what, name)
             wrapp_("widget_#{what}".to_sym, name)
           end
 
-          # Dinamicaly generate Wrappers::Form::Widgets*
+          # Dinamically generate Wrappers::Form::Widgets*
           # @exaple
           #   form.widget.button.ButtonName.click
           def widgets
@@ -1303,7 +1423,7 @@ module AssDevel
       private :testing_helper_module
     end
 
-    # Provades helpers {Fixtures} for filling infobase of testing datata,
+    # Provides helpers {Fixtures} for filling infobase of testing datata,
     # {Proxy} converts values beetween client and server
     # @todo require documented but unly example for memory
     #
