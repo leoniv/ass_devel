@@ -1515,7 +1515,7 @@ module AssDevel
     module RuntimesBridge
       class Proxy
         require 'date'
-        SIMPLE_TYPES = [String, Fixnum, Float, TrueClass, FalseClass, Time]
+        SIMPLE_TYPES = [String, Fixnum, Float, TrueClass, FalseClass, Time, NilClass]
         attr_reader :real_runtime, :srv_runtime
         def initialize(srv_runtime, real_runtime)
           @real_runtime = Module.new do
