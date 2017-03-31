@@ -2003,22 +2003,38 @@ module AssDevel
 
           define_method :connect_with do |roles, *args, &block|
             user = :"user_connect_with_#{roles.hash.abs}"
-            at_server do
-              fixt_let(user, :object_delete) do
-                u = infoBaseUsers.CreateUser
-                u.Name = "#{user}"
-                u.FullName = "Fake User #{user}"
-                roles.each do |r|
-                  u.Roles.Add metaData.Roles.send(r)
-                end
-                u.Write
-                u
-              end
+
+            fixt_add_user user, *roles do |u|
+              u.FullName = "Connect With #{user}"
             end
+
             begin
               connect_as(user, *args, &block)
             ensure
               fixtures.rm user if fixtures.respond_to? user
+            end
+          end
+
+          define_method :fixt_add_user do |name, *roles, &block|
+            at_server do
+              fixt_let(name, :object_delete) do
+                u = infoBaseUsers.CreateUser
+                u.Name = "#{name}"
+                roles.each do |r|
+                  u.Roles.Add metaData.Roles.send(r)
+                end
+                block.yield u if block_given?
+                u.Write
+                u
+              end
+            end
+
+          end
+
+          define_method :fixt_stub_user do |*roles|
+            user = :"user_stub_#{roles.hash.abs}"
+            fixt_add_user user, *roles do |u|
+              u.FullName = "User Stub #{u.Name}"
             end
           end
 
