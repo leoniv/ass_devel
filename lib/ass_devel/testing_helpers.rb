@@ -1074,6 +1074,7 @@ module AssDevel
             end
 
             alias_method :constant_manager, :objects_manager
+            alias_method :constant_metadata, :object_metadata
 
             def constant_value_manager
               constant_manager.CreateValueManager
