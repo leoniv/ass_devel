@@ -2002,11 +2002,7 @@ module AssDevel
           end
 
           define_method :connect_with do |roles, *args, &block|
-            user = :"user_connect_with_#{roles.hash.abs}"
-
-            fixt_add_user user, *roles do |u|
-              u.FullName = "Connect With #{user}"
-            end
+            user = fixt_stub_user *roles
 
             begin
               connect_as(user, *args, &block)
@@ -2028,7 +2024,7 @@ module AssDevel
                 u
               end
             end
-
+            name
           end
 
           define_method :fixt_stub_user do |*roles|
@@ -2036,6 +2032,7 @@ module AssDevel
             fixt_add_user user, *roles do |u|
               u.FullName = "User Stub #{u.Name}"
             end
+            user
           end
 
           # Add exists value for access and teardown
