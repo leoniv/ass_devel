@@ -838,20 +838,23 @@ module AssDevel
         # @todo add DocumentManger, TaskManger etc.
         module Abstract
           module AbstractObjectManager
+            module GenericManager
+              def object_metadata
+                mEtadata.send(md_collection).send(self.MD_NAME)
+              end
+
+              def objects_manager
+                fail "Manager #{md_collection}.#{self.MD_NAME} not found" unless\
+                  send(md_collection).ole_respond_to? self.MD_NAME
+                send(md_collection).send(self.MD_NAME)
+              end
+            end
+
+            include GenericManager
             include AssOle::Snippets::Shared::Query
             # Symbol like a :Catalogs, :Constants
             def md_collection
               fail 'Abstract method call'
-            end
-
-            def objects_manager
-              fail "Manager #{md_collection}.#{self.MD_NAME} not found" unless\
-                send(md_collection).ole_respond_to? self.MD_NAME
-              send(md_collection).send(self.MD_NAME)
-            end
-
-            def object_metadata
-              mEtadata.send(md_collection).send(self.MD_NAME)
             end
 
             # Abstract method must be redefined in module
@@ -1065,13 +1068,12 @@ module AssDevel
           end
 
           module ConstantManager
+            include AbstractObjectManager::GenericManager
             def md_collection
               :Constants
             end
 
-            def constant_manager
-              cOnstants.send(self.MD_NAME)
-            end
+            alias_method :constant_manager, :objects_manager
 
             def constant_value_manager
               constant_manager.CreateValueManager
