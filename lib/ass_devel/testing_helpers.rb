@@ -1874,13 +1874,16 @@ module AssDevel
         end
         private :teardowns_get
 
+        # For objects included into {Proxy::SIMPLE_TYPES} +teardown_do+
+        # always is +:nop+. For other objects it's expecting symbol from
+        # {DEF_TEARDOWNS_DO} or +Proc+ instance
         def teardowns_set(name, teardown_do_)
-          teardown_do = teardown_do_detect(teardown_do_)
-          fail ArgumentError, "teardown_do mast be a Proc" if\
-            !teardown_do.nil? && !teardown_do.is_a?(Proc)
           if Proxy::SIMPLE_TYPES.include? srv_values[name].class
             teardowns_do[srv_values[name]] = teardown_do_detect(:nop)
           else
+            teardown_do = teardown_do_detect(teardown_do_)
+            fail ArgumentError, "teardown_do mast be a Proc" unless\
+              teardown_do.is_a?(Proc)
             teardowns_do[srv_values[name]] = teardown_do
           end
         end
