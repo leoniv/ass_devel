@@ -1882,9 +1882,9 @@ module AssDevel
             teardowns_do[srv_values[name]] = teardown_do_detect(:nop)
           else
             teardown_do = teardown_do_detect(teardown_do_)
-            fail ArgumentError, "teardown_do mast be a Proc" unless\
-              teardown_do.is_a?(Proc)
             teardowns_do[srv_values[name]] = teardown_do
+            fail ArgumentError, "teardown_do for `#{name}'"\
+              " mast be a Proc" unless teardown_do.is_a?(Proc)
           end
         end
         private :teardowns_set
