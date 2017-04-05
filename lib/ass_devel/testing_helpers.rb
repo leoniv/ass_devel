@@ -2022,7 +2022,7 @@ module AssDevel
                 roles.each do |r|
                   u.Roles.Add metaData.Roles.send(r)
                 end
-                block.yield u if block_given?
+                block.yield u if block
                 u.Write
                 u
               end
