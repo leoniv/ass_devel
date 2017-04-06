@@ -1757,8 +1757,10 @@ module AssDevel
         private :fixture_make
 
         def add(name, teardown_do, &block)
-          fail ArgumentError unless block_given?
-          fail ArgumentError unless name.respond_to? :to_sym
+          fail ArgumentError, "While adding fixture `#{name}' " unless\
+            block_given?
+          fail ArgumentError, "`#{name}' not responding to :to_sym " unless\
+            name.respond_to? :to_sym
           fail "Transaction is active" if\
             proxy.srv_runtime.transactionActive
           fixture_make(name.to_sym, teardown_do, &block)
