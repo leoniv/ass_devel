@@ -952,22 +952,16 @@ module AssDevel
           module AbstractRegisterManager
             include AssOle::Snippets::Shared::Structure
             include AssOle::Snippets::Shared::Array
+            include AbstractObjectManager::GenericManager
             require 'date'
 
-            def register_manager
-              fail "Manager #{md_collection}.#{self.MD_NAME} not found" unless\
-                send(md_collection).ole_respond_to? self.MD_NAME
-              send(md_collection).send(self.MD_NAME)
-            end
+            alias_method :register_manager, :objects_manager
+            alias_method :register_metadata, :object_metadata
 
             def register_record_key
               ([:Period, :Recorder, :LineNumber] + register_dimensions).select do |k|
                 record_key.ole_respond_to? k
               end
-            end
-
-            def register_metadata
-              mEtadata.send(md_collection).send(self.MD_NAME)
             end
 
             def register_dimensions
