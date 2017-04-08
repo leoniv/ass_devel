@@ -703,6 +703,17 @@ module AssDevel
                 return unless ole.CurrentRow
                 rows[ole.CurrentRow]
               end
+
+              # Execute action :Selected with selected row and column
+              # @param row_index [Fixnum] row index
+              # @param column_name [String Symbol] widget column name
+              def double_click(row_index, column_name)
+                row = select(row_index)
+                return unless row
+                col = column(column_name)
+                fail ArgumentError, "Invalud column `#{column_name}'"
+                exec_action(:Selected, ole, row_index, row.ole, true)
+              end
             end
 
             # Wrapper for +FormButton+ widget
