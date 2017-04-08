@@ -712,7 +712,7 @@ module AssDevel
                 return unless row
                 col = column(column_name)
                 fail ArgumentError, "Invalud column `#{column_name}'" unless col
-                exec_action(:Selection, ole, row_index, row.ole, true)
+                exec_action(:Selection, ole, row_index, col.ole, true)
               end
             end
 
