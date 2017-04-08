@@ -711,7 +711,7 @@ module AssDevel
                 row = select(row_index)
                 return unless row
                 col = column(column_name)
-                fail ArgumentError, "Invalud column `#{column_name}'"
+                fail ArgumentError, "Invalud column `#{column_name}'" unless col
                 exec_action(:Selected, ole, row_index, row.ole, true)
               end
             end
