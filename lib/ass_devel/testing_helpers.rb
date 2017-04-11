@@ -894,7 +894,7 @@ module AssDevel
           def buttons
             r = {}
             ole.Items.each do |item|
-              r[item.Name] << Widget::Button.new(self, item.Name) if\
+              r[item.Name] = Widget::Button.new(self, item.Name) if\
                 item.ole_respond_to? :CommandName
             end
             r
