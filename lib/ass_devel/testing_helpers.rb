@@ -325,7 +325,7 @@ module AssDevel
               return FormAttribute if\
                 abs_attr.ole.ole_respond_to? :FormName
               return DynamicList if\
-                abs_attr.ole.ole_respond_to? :QueryText
+                abs_attr.ole.ole_respond_to? :SettingsComposer
               return FormDataCollection if\
                 (!abs_attr.ole.ole_respond_to?(:Property) && abs_attr.ole.ole_respond_to?(:Delete))
               return FormDataStructureAndCollection if\
