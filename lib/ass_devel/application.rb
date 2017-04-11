@@ -1,5 +1,13 @@
 module AssDevel
+  require 'ass_devel/meta_data/const'
   module Application
+    ROLE_ADMIN = :Admin
+    ROLE_ALL_RIGHTS = :AllRights
+    ROLE_USER = :User
+    ROLE_EXECUTOR = :ExternalExecute
+
+    ROLES_DEFAULT = [ROLE_ADMIN, ROLE_ALL_RIGHTS]
+
     # @todo it's stub
     class Specification
       attr_accessor :name, :platform_require, :src_root, :release_dir
@@ -8,17 +16,43 @@ module AssDevel
         @src ||= Src.new(self)
       end
 
-      attr_accessor :Name
+      MetaData::Const::MdClasses.get(:Configuration).properties.each do |prop|
+        attr_accessor prop.en
+      end
+
+      MetaData::Const::MdClasses.get(:Configuration)
+        .collection_properties.each do |prop|
+        attr_accessor prop.en
+      end
+
+      attr_writer :role_all_rights
+      attr_writer :role_user
+      attr_writer :role_admin
+      attr_writer :role_executor
+
+      def role_admin
+        @role_admin ||= ROLE_ADMIN
+      end
+
+      def role_all_rights
+        @role_all_rights ||= ROLE_ALL_RIGHTS
+      end
+
+      def role_user
+        @role_user ||= ROLE_USER
+      end
+
+      def role_executor
+        @role_executor ||= ROLE_EXECUTOR
+      end
+
+      def DefaultRoles
+        @DefaultRoles ||= ROLES_DEFAULT
+      end
+
       alias_method :name, :Name
       alias_method :name=, :Name=
-      attr_accessor :Synonym
-      attr_accessor :Comment
-      attr_accessor :Version
       alias_method :version, :Version
-      attr_accessor :Copyright
-      attr_accessor :BriefInformation
-      attr_accessor :DetailedInformation
-      attr_accessor :ConfigurationInformationAddress
     end
 
     class Src < Sources::Abstract::Src

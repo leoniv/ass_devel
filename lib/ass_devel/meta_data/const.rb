@@ -322,6 +322,30 @@ module AssDevel
         add :Operations, :Операции, :WebServiceOperation
       end
 
+      module MdCollectionProperties
+        class MdCollectionProperty < RuEnNamed
+          include IncludedInMdClass
+          def initialize(en, ru, module_)
+            super en, ru, module_
+          end
+
+          def md_class
+            MdClasses.get(md_class_name)
+          end
+        end
+
+        extend HaveContent
+
+        def self.klass
+          MdCollectionProperty
+        end
+
+        add :DefaultRoles, :ОсновныеРоли
+        add :AdditionalFullTextSearchDictionaries,
+          :ДополнительныеСловариПолнотекстовогоПоиска
+        # TODO: fill all 1C MetadataObjectPropertyValueCollection
+      end
+
       module MdProperties
         COMMON_PREFIX = :Common
         class RawProp < RuEnNamed
@@ -502,6 +526,23 @@ module AssDevel
             @properties ||= add_array DEF_PROPS, MdProperties
           end
 
+          def collection_properties=(arr)
+            @collection_properties = find_collection_properties(arr)
+          end
+
+          def find_collection_properties(arr)
+            arr.map do |word|
+              fail ArgumentError,
+                "#{word} not found in #{MdCollectionProperties}" unless\
+                MdCollectionProperties.get(word)
+              MdCollectionProperties.get(word)
+            end
+          end
+
+          def collection_properties
+            @collection_properties ||= []
+          end
+
           def add_array(arr, module_)
             arr.map do |word|
               fail ArgumentError, "#{word} not found in #{module_}" unless\
@@ -647,6 +688,11 @@ module AssDevel
                                DetailedInformation
                                Vendor
                                NamePrefix
+          }
+
+          klass.collection_properties = %w{
+            AdditionalFullTextSearchDictionaries
+            DefaultRoles
           }
 
           klass.raw_props = %{
