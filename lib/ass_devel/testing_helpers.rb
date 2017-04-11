@@ -442,6 +442,71 @@ module AssDevel
             # Wrapper for +DynamicList+ attribute
             class DynamicList < Abstract
               include AbstractCollection
+
+              class Row
+                include AbstractCollectionItem
+                attr_reader :widget, :ole
+                def initialize(widget, ole)
+                  @widget = widget
+                  @ole = ole
+                end
+
+                def method_missing(m, *args)
+                  return get(column(m)) if column(m)
+                  ole.send(m, *args)
+                end
+
+                def column(name)
+                  widget.column(name)
+                end
+                private :column
+
+                def get(column)
+                  ole.send(column.data_path.split('.').last)
+                end
+                private :get
+
+                def data_source
+                  widget.data_source
+                end
+
+                def select(name)
+                  fail ArgumentError, "Invalud column #{name}" unless column(name)
+                  widget.CurrentItem = column(name).ole
+                  column(name)
+                end
+
+                def index
+                  nil
+                end
+              end
+
+              class Rows
+                attr_reader :dlist, :widget
+                def initialize(widget, dlist)
+                  @dlist = dlist
+                  @widget = widget
+                end
+
+                def [](value)
+                  row_data = widget.RowData(value)
+                  return uless row_data
+                  widget.CurrentRow = value
+                  Row.new(widget, row_data)
+                end
+
+                def find(&block)
+                  fail ArgumentError, "DynamicList::Rows can't find"
+                end
+              end
+
+              def rows_get(widget)
+                Rows.new(widget, self)
+              end
+
+              def count
+                fail ArgumentError, "DynamicList hasn't :Count property"
+              end
             end
 
             # Wrapper for +FormDataCollection+ attribute
@@ -691,6 +756,8 @@ module AssDevel
               end
 
               # Select row per index
+              # @param index [Fixnum WIN32OLE]
+              #   TODO: for DynamicList expects WIN32OLE???
               # @return row wrapper instance or nil
               def select_per_index(index)
                 return unless index
