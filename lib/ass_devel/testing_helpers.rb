@@ -490,7 +490,7 @@ module AssDevel
 
                 def [](value)
                   row_data = widget.RowData(value)
-                  return uless row_data
+                  return unless row_data
                   widget.CurrentRow = value
                   Row.new(widget, row_data)
                 end
@@ -1371,7 +1371,7 @@ module AssDevel
               arr
           end
 
-          # Find object per +find_attributes+ and call +what_do+ uless object
+          # Find object per +find_attributes+ and call +what_do+ unless object
           # found. Block will be passed indo +what_do+ method. +args+ is
           # suitable for {#find} method +args+ array.
           # @param what_do [Symbol] method name :make, :new, :ref
