@@ -846,6 +846,7 @@ module AssDevel
           # Click on button
           # @exaple
           #  form.click(:ButtonName)
+          # @todo refactoring for get button via {#buttons}
           def click(button)
             widgets.button.send(button).click
           end
@@ -888,6 +889,16 @@ module AssDevel
             end.new(self)
           end
           alias_method :atr, :attributes
+
+          # @return [Hash] of {Widget::Button} wrappers
+          def buttons
+            r = {}
+            ole.Items.each do |item|
+              r[item.Name] << Widget::Button.new(self, item.Name) if\
+                item.ole_respond_to? :CommandName
+            end
+            r
+          end
         end
       end
     end
