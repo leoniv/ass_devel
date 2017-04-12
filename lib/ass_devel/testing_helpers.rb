@@ -1956,7 +1956,8 @@ module AssDevel
         def teardown_error_mess(errors)
           message = ""
           errors.each do |name, e|
-            message << "\nTeardown fixture: `#{name}' Error: #{e.message}\n====\n"
+            message << "\nTeardown fixture: `#{name}' Error:\n"\
+              "====\n#{e.message}\n====\n"
           end
           message
         end
