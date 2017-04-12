@@ -1957,7 +1957,7 @@ module AssDevel
           message = ""
           errors.each do |name, e|
             message << "\nTeardown fixture: `#{name}' Error:\n"\
-              "====\n#{e.message}\n====\n"
+              "#{e.message}\n\n"
           end
           message
         end
