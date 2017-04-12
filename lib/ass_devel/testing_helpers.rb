@@ -430,6 +430,7 @@ module AssDevel
                   row.send("#{k} = ", v)
                 end
                 yield row if block_given?
+                row
               end
 
               # Must add row in data collection
