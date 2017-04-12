@@ -411,14 +411,30 @@ module AssDevel
               # Must returns array of row wrappers
               # @return [Array]
               def rows_get(widget)
-                fail NotImplementedError
+                fail NotImplementedErro, 'Abstract method'
               end
 
               # Must return collection size or nil if getting collection size
               # unpossible
               # @return [Fixnum nil]
               def count
-                fail NotImplementedError
+                fail NotImplementedError, 'Abstract method'
+              end
+
+              # Must yiels row wrapper
+              # @param options [Hash] default row values
+              # @yield row wrapper instance
+              def add(widget, **options, &block)
+                row = row_add(widget)
+                options.each do |k, v|
+                  row.send("#{k} = ", v)
+                end
+                yield row if block_given?
+              end
+
+              # Must add row in data collection
+              def row_add(widget)
+                fail NotImplementedError, 'Abstract method'
               end
             end
 
@@ -496,7 +512,7 @@ module AssDevel
                 end
 
                 def find(&block)
-                  fail ArgumentError, "DynamicList::Rows can't find"
+                  fail NotImplementedError, "DynamicList::Rows can't find"
                 end
               end
 
@@ -505,7 +521,11 @@ module AssDevel
               end
 
               def count
-                fail ArgumentError, "DynamicList hasn't :Count property"
+                fail NotImplementedError, "DynamicList hasn't :Count property"
+              end
+
+              def row_add(widget)
+                fail NotImplementedError, "DynamicList hasn't adding row"
               end
             end
 
@@ -564,6 +584,11 @@ module AssDevel
               # @return [Fixnum]
               def count
                 Count()
+              end
+
+              def row_add(widget)
+                row = Add()
+                rows_get(widget).last
               end
             end
 
@@ -780,6 +805,16 @@ module AssDevel
                 col = column(column_name)
                 fail ArgumentError, "Invalud column `#{column_name}'" unless col
                 exec_action(:Selection, ole, row_index, col.ole, true)
+              end
+
+              # Adding new row into {#data_source} collection
+              # If row wrapper has +index+ adde row well be selected
+              # @return row wrapper
+              # @param options [Hash] row properties values
+              def add(**options, &block)
+                row = data_source.add(self, **options, &block)
+                return select_per_index(row.index) if row.index
+                row
               end
             end
 
