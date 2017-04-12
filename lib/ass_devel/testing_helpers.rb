@@ -1942,13 +1942,37 @@ module AssDevel
         end
         alias_method :rm, :teardown
 
+        class TeardownError < StandardError; end
+
         def teardown_all
           fail "Auto teardown all fixtures unpossible" unless auto_teardown_all?
-          srv_values.keys.each do |name|
-            auto_teardown name
+          errors = try_teardown_all
+          if errors.size > 0
+            fail TeardownError, teardown_error_mess(errors)
           end
         end
         alias_method :rm_all, :teardown_all
+
+        def teardown_error_mess(errors)
+          message = ""
+          errors.each do |name, e|
+            message << "Teardown fixture: `#{name}' Error: #{e.message}\n====\n"
+          end
+          message
+        end
+
+        def try_teardown_all
+          result = {}
+          srv_values.keys.each do |name|
+            begin
+              auto_teardown name
+            rescue WIN32OLERuntimeError => e
+              result[name] = e
+            end
+          end
+          result
+        end
+        private :try_teardown_all
 
         def auto_teardown(name)
           fail ArgumentError, "Teardown fixture `#{name}' not found" unless\
