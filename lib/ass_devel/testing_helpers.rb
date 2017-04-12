@@ -1956,7 +1956,7 @@ module AssDevel
         def teardown_error_mess(errors)
           message = ""
           errors.each do |name, e|
-            message << "Teardown fixture: `#{name}' Error: #{e.message}\n====\n"
+            message << "\nTeardown fixture: `#{name}' Error: #{e.message}\n====\n"
           end
           message
         end
@@ -2003,11 +2003,12 @@ module AssDevel
         private :fixture_rm
 
         def _teardown(name, &block)
-#          fail ArgumentError,
-#            "Fixture `#{name}' not found" unless fixture_defined? name
           return unless fixture_defined? name
-          yield srv_values[name], proxy.srv_runtime.ole_runtime_get
-          fixture_rm name
+          begin
+            yield srv_values[name], proxy.srv_runtime.ole_runtime_get
+          ensure
+            fixture_rm name
+          end
         end
         private :_teardown
 
