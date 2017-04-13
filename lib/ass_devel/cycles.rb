@@ -25,8 +25,21 @@ module AssDevel
         extend Support::Shell
 
         TAG_PREFIX = 'v'
+        # Version must be a string like: 1.2.3.word.2.word.1.2
+        # where first 3 segments is necessary and is a numbers
+        # and all other is optional words in down case or numbers
+        VERSION_PATTERN = '\d+\.\d+\.\d+((\.\d+)|(\.[a-z]+))*'
+
+        VERSION_REGEX = %r{^#{VERSION_PATTERN}\z}
+        VERSION_TAGS_REGEX = %r{^#{TAG_PREFIX}#{VERSION_PATTERN}\z}
 
         def self.version_tag(version)
+          fail ArgumentError, "Invalid version string `#{version}'\n"\
+          "Version must be a string like: `1.2.3.word.2.word.1.2'"\
+          " where first 3 segments is necessary and is a numbers"\
+          " and all other is optional words in down case or numbers" unless
+          version.to_s =~ VERSION_REGEX
+
           "#{TAG_PREFIX}#{version}"
         end
 
@@ -38,7 +51,7 @@ module AssDevel
 
         def self.version_tags
           handle_shell('git tag').split("\n")
-            .select {|t| t.strip =~ %r{^#{TAG_PREFIX}\d+\.\d+\.\d+(\.\d+)?\z}}
+            .select {|t| t.strip =~ VERSION_TAGS_REGEX}
         end
 
         def version_tag
@@ -67,9 +80,7 @@ module AssDevel
         end
 
         def tag_exist?
-          return false unless\
-            self.class.version_tags.include?(version_tag)
-          true
+          self.class.version_tags.include?(version_tag)
         end
 
         def self.included(base)
