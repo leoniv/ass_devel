@@ -101,6 +101,7 @@ module AssDevel
       end
 
       attr_accessor :name, :platform_require, :src_root, :release_dir
+      attr_accessor :name_space
       attr_reader :type
       attr_writer :app_requrements
       attr_writer :lang

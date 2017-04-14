@@ -626,11 +626,23 @@ module AssDevel
 
           def fname
             return flatten_fname if flatten
-            File.join(cycle.spec.name.to_s, version.to_s, flatten_fname)
+            File.join(name_space, binary_fname)
           end
 
           def flatten_fname
+            "#{flatten_name_space}.#{binary_fname}"
+          end
+
+          def binary_fname
             "#{cycle.spec.name}.#{version}.#{cycle.spec.type.ext}"
+          end
+
+          def flatten_name_space
+            cycle.spec.name_space.name.gsub('::', '.')
+          end
+
+          def name_space
+            cycle.spec.name_space.name.gsub('::', '/')
           end
         end
         include Abstract

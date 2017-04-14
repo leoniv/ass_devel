@@ -40,6 +40,7 @@ module AssDevel
         spec.platform_require = self::PLATFORM_REQUIRE
         spec.src_root = self::SRC_ROOT
         spec.release_dir = self::RELEASE_DIR
+        spec.name_space = self
         yield spec
         @specification = spec
       end
