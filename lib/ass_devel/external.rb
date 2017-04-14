@@ -234,7 +234,9 @@ module AssDevel
           private :conn_str_get
 
           def prepare_build_dir
-            "#{build.build_path}.ib"
+            r = "#{build.build_path}.ib"
+            FileUtils.mkdir_p r
+            r
           end
           private :prepare_build_dir
         end
