@@ -34,25 +34,26 @@ module AssDevel
     end
 
     module External
-      def _external(name, type_cls, &block)
+      def _external(type_cls, &block)
         spec = AssDevel::External::Specification.new(type_cls)
-        spec.name = name
+        name_space = self.name.split('::')
+        spec.name = name_space.pop
         spec.platform_require = self::PLATFORM_REQUIRE
         spec.src_root = self::SRC_ROOT
         spec.release_dir = self::RELEASE_DIR
-        spec.name_space = self
+        spec.name_space = eval(name_space.join('::')) || eval(spec.name)
         yield spec
         @specification = spec
       end
       private :_external
 
-      def dataprocessor(name, &block)
-        _external(name, AssDevel::External::Specification::Types::Processor,
+      def dataprocessor(&block)
+        _external(AssDevel::External::Specification::Types::Processor,
                   &block)
       end
 
-      def report(name, &block)
-        _external(name, AssDevel::External::Specification::Types::Report,
+      def report(&block)
+        _external(AssDevel::External::Specification::Types::Report,
                   &block)
       end
 

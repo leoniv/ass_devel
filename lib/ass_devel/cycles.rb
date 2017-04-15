@@ -18,6 +18,7 @@ module AssDevel
     class DifferentConfigError < StandardError; end
     class DifferentVersionError < StandardError; end
     class CheckConfigError < StandardError; end
+    class DifferentAttributeErrror < StandardError; end
 
     module Mixins
       module Release
@@ -650,10 +651,31 @@ module AssDevel
         include Mixins::CommitBinary
 
         def app_version_get
+          object_attributes[:version]
+        end
+
+        def object_attributes
+          @object_attributes ||= object_attributes_get
+        end
+
+        def object_attributes_get
+          result = {}
           begin
             ext = info_base.ole(:external)
             ext.__open__ info_base.connection_string
-            result = external_object(ext).Version
+            eobject = external_object(ext)
+
+            fail ArgumentError,
+              'ExternalProcessor o ExternalReport must specify version'\
+              ' like a function VERSION in object\'s module' unless\
+              eobject.ole_respond_to? :VERSION
+            fail ArgumentError,
+              'ExternalProcessor o ExternalReport must specify namespace'\
+              ' like a function NAMESPACE in object\'s module' unless\
+              eobject.ole_respond_to? :NAMESPACE
+            result[:version] = eobject.VERSION
+            result[:name_space] = eobject.NAMESPACE
+            result[:name] = eobj.Name
           ensure
             ext.__close__ if ext
           end
@@ -661,7 +683,8 @@ module AssDevel
         end
 
         def external_object(ole_connector)
-          ole_connector.send(ole_manager).Create(full_win_path)
+          ole_connector.send(ole_manager)
+            .Create(full_win_path)
         end
 
         def ole_manager
@@ -674,7 +697,17 @@ module AssDevel
         end
 
         def check_spec
+          check(:name)
+          chech(:name_space)
           check_version
+        end
+
+        def check(what)
+          console "Check #{what}"
+          fail DifferentAttributeErrror,
+            "Object #{what} `#{object_attributes[what]}'"\
+            " not match app_spec #{what} `#{app_spec.send(what)}'" unless\
+            object_attributes[what] == app_spec.send(what).to_s
         end
 
         def after_release
