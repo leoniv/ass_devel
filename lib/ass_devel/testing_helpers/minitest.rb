@@ -46,7 +46,7 @@ require 'minitest/spec'
 # Monkey patch
 module Minitest
   # @example (see AssDevel::MetaData::Minitest::IncludeManager)
-  class Spec
+  class Test
     extend AssDevel::TestingHelpers::MetaData::Minitest::IncludeManager
   end
 end
