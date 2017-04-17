@@ -675,7 +675,7 @@ module AssDevel
               eobject.ole_respond_to? :NAMESPACE
             result[:version] = eobject.VERSION
             result[:name_space] = eobject.NAMESPACE
-            result[:name] = eobj.Name
+            result[:name] = eobject.Metadata.Name
           ensure
             ext.__close__ if ext
           end
