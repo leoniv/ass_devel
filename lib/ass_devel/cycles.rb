@@ -698,7 +698,7 @@ module AssDevel
 
         def check_spec
           check(:name)
-          chech(:name_space)
+          check(:name_space)
           check_version
         end
 
