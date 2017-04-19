@@ -67,7 +67,6 @@ module AssDevel
             "/////////////////////////////////////////////////////////////////////////////////\r\n"\
             "// Module [ObjectModule] #{Date.today.to_s}\r\n"\
             "/////////////////////////////////////////////////////////////////////////////////\r\n"\
-            "#{region_spec_object_module_template}"\
             "#Region Exceptions_Constants_Types\r\n"\
             "//* Exceptions */////////////////////////////////////////////////////////////////\r\n"\
             "\r\n"\
@@ -86,6 +85,8 @@ module AssDevel
             "\r\n"\
             "\r\n"\
             "#EndRegion //Exceptions_Constants_Types\r\n"\
+            "\r\n"\
+            "#{region_spec_object_module_template}"\
             "\r\n"\
             "//* Interface *//////////////////////////////////////////////////////////////////\r\n"\
             "\r\n"\
@@ -210,7 +211,7 @@ module AssDevel
       def init_src
         return if exists?
         make_root_file
-        make_object_module
+        make_object_module_file
         repo_add_to_index
       end
 
