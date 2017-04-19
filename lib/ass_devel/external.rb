@@ -23,7 +23,7 @@ module AssDevel
             'Abstract method call'
           end
 
-          def new
+          def root_file_template
             template
           end
 
@@ -60,6 +60,63 @@ module AssDevel
 
           def ole_manager
             raise 'Abstract method call'
+          end
+
+          require 'date'
+          def object_module_template
+            "/////////////////////////////////////////////////////////////////////////////////\r\n"\
+            "// Module [ObjectModule] #{Date.today.to_s}\r\n"\
+            "/////////////////////////////////////////////////////////////////////////////////\r\n"\
+            "#{region_spec_object_module_template}"\
+            "#Region Exceptions_Constants_Types\r\n"\
+            "//* Exceptions */////////////////////////////////////////////////////////////////\r\n"\
+            "\r\n"\
+            "\r\n"\
+            "//* Constants *//////////////////////////////////////////////////////////////////\r\n"\
+            "\r\n"\
+            "function VERSION() export\r\n"\
+            "\treturn \"#{spec.version}\";\r\n"\
+            "endfunction\r\n"\
+            "\r\n"\
+            "function NAMESPACE() export\r\n"\
+            "\treturn \"#{spec.name_space}\";\r\n"\
+            "endfunction\r\n"\
+            "\r\n"\
+            "//* Types *//////////////////////////////////////////////////////////////////////\r\n"\
+            "\r\n"\
+            "\r\n"\
+            "#EndRegion //Exceptions_Constants_Types\r\n"\
+            "\r\n"\
+            "//* Interface *//////////////////////////////////////////////////////////////////\r\n"\
+            "\r\n"\
+            "\r\n"\
+            "//* Implementation */////////////////////////////////////////////////////////////\r\n"\
+            "\r\n"\
+            "#Region Private\r\n"\
+            "\r\n"\
+            "#EndRegion //Private\r\n"\
+            "\r\n"\
+            "//* Helpers *///////////////////////////////////////////////////////////////////\r\n"\
+            "\r\n"\
+            "#Region Helpers\r\n"\
+            "\r\n"\
+            "// Hole for testing\r\n"\
+            "function TestGateWay(EvalStr,Arguments) export\r\n"\
+            "\treturn eval(EvalStr);\r\n"\
+            "endfunction\r\n"\
+            "\r\n"\
+            "#EndRegion //Helpers"
+          end
+
+          def region_spec_object_module_template
+            return unless spec.object_module_template
+            "\r\n"\
+            "#Region InheritedCode\r\n"\
+            "\r\n"\
+            "#{spec.object_module_template}\r\n"
+            "\r\n"\
+            "#EndRegion //InheritedCode\r\n"\
+            "\r\n"
           end
         end
 
@@ -106,6 +163,10 @@ module AssDevel
       attr_writer :app_requrements
       attr_writer :lang
 
+      # For include 1C code snippets
+      # into ObjectModule.bsl
+      attr_accessor :object_module_template
+
       def initialize(type_cls)
         @type = type_cls.new(self)
       end
@@ -148,12 +209,37 @@ module AssDevel
 
       def init_src
         return if exists?
+        make_root_file
+        make_object_module
+        repo_add_to_index
+      end
+
+      def root_dir
+        File.basename(self.class.ROOT_FILE,'.xml')
+      end
+
+      def ext_dir
+        File.join(src_root, root_dir, 'Ext')
+      end
+
+      def object_module_file
+        'ObjectModule.bsl'
+      end
+
+      def make_object_module_file
+        FileUtils.mkdir_p ext_dir
+        FileUtils.touch object_module_file
+        File.open(object_module_file, 'w:utf-8', :bom => true) do |f|
+          f.write(spec.type.object_module_template)
+        end
+      end
+
+      def make_root_file
         FileUtils.mkdir_p src_root
         FileUtils.touch root_file
         File.open(root_file, 'w:utf-8', :bom => true) do |f|
-          f.write(spec.type.new)
+          f.write(spec.type.root_file_template)
         end
-        repo_add_to_index
       end
 
       def fail_operation_not_support(op)

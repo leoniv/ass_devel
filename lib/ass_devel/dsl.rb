@@ -42,6 +42,8 @@ module AssDevel
         spec.src_root = self::SRC_ROOT
         spec.release_dir = self::RELEASE_DIR
         spec.name_space = eval(name_space.join('::')) || eval(spec.name)
+        spec.object_module_template = self.object_module_template if\
+          self.respond_to? :object_module_template
         yield spec
         @specification = spec
       end
