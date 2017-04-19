@@ -224,7 +224,7 @@ module AssDevel
       end
 
       def object_module_file
-        'ObjectModule.bsl'
+        File.join(ext_dir, 'ObjectModule.bsl')
       end
 
       def make_object_module_file
