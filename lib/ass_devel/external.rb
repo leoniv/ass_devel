@@ -114,7 +114,7 @@ module AssDevel
             "\r\n"\
             "#Region InheritedCode\r\n"\
             "\r\n"\
-            "#{spec.object_module_template}\r\n"
+            "#{spec.object_module_template}\r\n"\
             "\r\n"\
             "#EndRegion //InheritedCode\r\n"\
             "\r\n"
