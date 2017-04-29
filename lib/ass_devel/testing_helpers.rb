@@ -935,6 +935,16 @@ module AssDevel
             end
             r
           end
+
+          def get_action(action)
+            server.call("GetAction", action.to_s)
+          end
+
+          def exec_action(action, *args)
+            method = get_action(action)
+            fail ArgumentError, "Invalid action `#{action}'" if method.empty?
+            client.send(method, *args)
+          end
         end
       end
     end
