@@ -18,7 +18,6 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "unicode"
   spec.add_dependency "ass_launcher", "~> 0.2.0"
   spec.add_dependency "ass_tests"
   spec.add_dependency "ass_ole-snippets-shared", "~> 0.2"

@@ -1,6 +1,5 @@
 module AssDevel
   module MetaData
-    require 'unicode'
 
     # Common mixins for define md objects class
     module Mixins

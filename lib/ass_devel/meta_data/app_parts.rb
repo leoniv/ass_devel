@@ -246,7 +246,8 @@ module AssDevel
         private :prefixes_get
 
         def norm_prefix(prefix)
-          Unicode.downcase(prefix.to_s)
+          raise 'FIXME remove unicode dependency'
+          #Unicode.downcase(prefix.to_s)
         end
         private :norm_prefix
 
