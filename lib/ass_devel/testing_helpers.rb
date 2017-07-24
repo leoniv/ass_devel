@@ -427,7 +427,7 @@ module AssDevel
               def add(widget, **options, &block)
                 row = row_add(widget)
                 options.each do |k, v|
-                  row.send("#{k} = ", v)
+                  row.send("#{k}=", v)
                 end
                 yield row if block_given?
                 row
