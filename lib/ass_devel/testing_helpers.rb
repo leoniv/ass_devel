@@ -748,7 +748,8 @@ module AssDevel
 
               def column(coll)
                 columns.find do |f|
-                  f.Name =~ %r{\A#{coll}\z}i
+                  f.Name =~ %r{\A#{coll}\z}i || f.data_path
+                    .split('.').last =~ %r{\A#{coll}\z}
                 end
               end
               alias_method :[], :column
