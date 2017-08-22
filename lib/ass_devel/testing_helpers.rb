@@ -587,6 +587,10 @@ module AssDevel
                 Count()
               end
 
+              def clear
+                Clear()
+              end
+
               def row_add(widget)
                 row = Add()
                 rows_get(widget).last
@@ -700,7 +704,8 @@ module AssDevel
               include Abstract::ItHas::GetAction
             end
 
-            # Wrapper for +FormTable+ widget
+            # Wrapper for +
+            # FormTable+ widget
             class Formtable
               # Extension for +FormField+ widget which inclded into {Formtable}
               class Field < Formfield
@@ -762,6 +767,12 @@ module AssDevel
               # @return [Fixnum nil]
               def count
                 data_source.count
+              end
+
+              # Cliear FormDataCollection {#data_source}
+              # @return nil
+              def clear
+                data_source.clear if data_source.respond_to? :clear
               end
 
               # Select row per index or conditions
