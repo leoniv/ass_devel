@@ -721,7 +721,7 @@ module AssDevel
 
                   def set(v)
                     data_source.set(v)
-                    if respond_to? :get_action && get_action(:OnChange)
+                    if respond_to?(:get_action) && !get_action(:OnChange).empty?
                        exec_action :OnChange, ole
                     end
                   end
