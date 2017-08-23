@@ -861,14 +861,14 @@ module AssDevel
               # @return row wrapper instance or nil
               def select_per_index(index)
                 return unless index
-                rows[ole.CurrentRow = index]
+                ole.CurrentRow = rows[index].GetId if rows[index]
               end
 
               # Return row wrapper for +CurrentRow+ of table
               # @return row wrapper instance
               def current_row
                 return unless ole.CurrentRow
-                rows[ole.CurrentRow]
+                rows.find {|row| row.GetId == ole.CurrentRow}
               end
 
               # Execute action :Selected with selected row and column
