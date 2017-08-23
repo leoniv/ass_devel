@@ -404,6 +404,13 @@ module AssDevel
               def value
                 nil
               end
+
+              # Set attribute value
+              # But not always possible do it
+              # On default raise NotImplementedError
+              def set(v)
+                fail NotImplementedError
+              end
             end
 
             # Abstract extension for attribute which is collection
@@ -444,6 +451,16 @@ module AssDevel
               def index
                 fail NotImplementedError
               end
+
+              def get(column)
+                fail NotImplementedError
+              end
+              private :get
+
+              def set(column, value)
+                fail NotImplementedError
+              end
+              private :get
             end
 
             # Wrapper for generic attribute
@@ -453,6 +470,17 @@ module AssDevel
                 return ole if lnames.size == 0
                 return send(last_name) if lnames.size == 1
                 srv_prop_get(last_name)
+              end
+
+              def set(v)
+                root = form_wrapper.ole
+                last = lnames.pop
+
+                lnames.each do |prop|
+                  root = root.send(prop)
+                end
+
+                root.send("#{last}=", v)
               end
             end
 
@@ -480,6 +508,11 @@ module AssDevel
 
                 def get(column)
                   ole.send(column.data_path.split('.').last)
+                end
+                private :get
+
+                def set(*_)
+                  nil
                 end
                 private :get
 
@@ -558,6 +591,11 @@ module AssDevel
                   ole.send(column.data_path.split('.').last)
                 end
                 private :get
+
+                def set(column, v)
+                  ole.send("#{column.data_path.split('.').last}=", v)
+                end
+                private :set
 
                 def ole
                   data_source.Get(index)
@@ -680,6 +718,13 @@ module AssDevel
                   def value
                     data_source.value
                   end
+
+                  def set(v)
+                    data_source.set(v)
+                    if respond_to? :get_action && get_action(:OnChange)
+                       exec_action :OnChange, ole
+                    end
+                  end
                 end
 
                 # Wrappers for widgets which has +GetAction+ method
@@ -720,8 +765,17 @@ module AssDevel
                 end
 
                 def value
-                  return nil unless form_table.current_row
+                  return unless form_table.current_row
                   form_table.current_row.send(:get, self)
+                end
+
+                def set(v)
+                  return unless form_table.current_row
+                  form_table.current_row.send(:set, self, v)
+
+                  if get_action(:OnChange)
+                     exec_action :OnChange, ole
+                  end
                 end
               end
 
