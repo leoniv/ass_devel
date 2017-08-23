@@ -807,11 +807,19 @@ module AssDevel
 
               def column(coll)
                 columns.find do |f|
-                  f.Name =~ %r{\A#{coll}\z}i || f.data_path
-                    .split('.').last =~ %r{\A#{coll}\z}
+                   match_by_name?(f, coll) || match_by_path?(f, coll)
                 end
               end
               alias_method :[], :column
+
+              def match_by_path?(f, coll)
+                !(f.data_path.split('.').last =~ %r{\A#{coll}\z}).nil?
+              end
+
+              def match_by_name?(f, coll)
+                !(f.Name =~ %r{\A#{coll}\z}i).nil?
+              end
+              private :match_by_name?
 
               def rows
                 data_source.rows_get(self)
