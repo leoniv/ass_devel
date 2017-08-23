@@ -773,7 +773,7 @@ module AssDevel
                   return unless form_table.current_row
                   form_table.current_row.send(:set, self, v)
 
-                  if get_action(:OnChange)
+                  if !get_action(:OnChange).empty?
                      exec_action :OnChange, ole
                   end
                 end
