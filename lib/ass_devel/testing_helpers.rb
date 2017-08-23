@@ -862,6 +862,7 @@ module AssDevel
               def select_per_index(index)
                 return unless index
                 ole.CurrentRow = rows[index].GetId if rows[index]
+                rows[index]
               end
 
               # Return row wrapper for +CurrentRow+ of table
