@@ -461,6 +461,10 @@ module AssDevel
                 fail NotImplementedError
               end
               private :get
+
+              def get_id
+                fail NotImplementedError
+              end
             end
 
             # Wrapper for generic attribute
@@ -490,10 +494,11 @@ module AssDevel
 
               class Row
                 include AbstractCollectionItem
-                attr_reader :widget, :ole
-                def initialize(widget, ole)
+                attr_reader :widget, :ole, :id
+                def initialize(widget, ole, id)
                   @widget = widget
                   @ole = ole
+                  @id = id
                 end
 
                 def method_missing(m, *args)
@@ -514,7 +519,7 @@ module AssDevel
                 def set(*_)
                   nil
                 end
-                private :get
+                private :set
 
                 def data_source
                   widget.data_source
@@ -529,6 +534,8 @@ module AssDevel
                 def index
                   nil
                 end
+
+                alias_method :get_id, :id
               end
 
               class Rows
@@ -541,8 +548,7 @@ module AssDevel
                 def [](value)
                   row_data = widget.RowData(value)
                   return unless row_data
-                  widget.CurrentRow = value
-                  Row.new(widget, row_data)
+                  Row.new(widget, row_data, value)
                 end
 
                 def find(&block)
@@ -609,6 +615,10 @@ module AssDevel
                   fail ArgumentError, "Invalud column #{name}" unless column(name)
                   widget.CurrentItem = column(name).ole
                   column(name)
+                end
+
+                def get_id
+                  ole.GetId
                 end
               end
 
@@ -861,7 +871,7 @@ module AssDevel
               # @return row wrapper instance or nil
               def select_per_index(index)
                 return unless index
-                ole.CurrentRow = rows[index].GetId if rows[index]
+                ole.CurrentRow = rows[index].get_id if rows[index]
                 rows[index]
               end
 
