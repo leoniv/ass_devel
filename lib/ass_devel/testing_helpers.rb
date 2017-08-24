@@ -552,7 +552,7 @@ module AssDevel
                 end
 
                 def find(&block)
-                  fail NotImplementedError, "DynamicList::Rows can't find"
+                  self[widget.CurrentRow]
                 end
               end
 
@@ -879,7 +879,7 @@ module AssDevel
               # @return row wrapper instance
               def current_row
                 return unless ole.CurrentRow
-                rows.find {|row| row.GetId == ole.CurrentRow}
+                rows.find {|row| row.get_id == ole.CurrentRow}
               end
 
               # Execute action :Selected with selected row and column
