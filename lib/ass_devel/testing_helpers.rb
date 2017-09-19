@@ -1323,6 +1323,12 @@ module AssDevel
               send(md_collection).Create(self.MD_NAME)
             end
 
+
+            def ole_version
+               Gem::Version.new ole_connector.NewObject('SystemInfo').AppVersion
+            end
+
+            # @todo Fuckin 1C. Refactoring require
             def external_connect(path, safe_mode = false)
               external_object_path = AssLauncher::Support::Platforms
                 .path(path.to_s).realpath
@@ -1332,8 +1338,16 @@ module AssDevel
 
               link = ole_connector.putToTempStorage(dd)
 
-              ole_connector.send(md_collection)
-                .connect(link, self.MD_NAME, safe_mode)
+              if ole_version > Gem::Version.new('8.3.9.2033')
+                aod = ole_connector
+                  .newObject 'UnsafeOperationProtectionDescription'
+                aod.UnsafeOperationWarnings = false
+                ole_connector.send(md_collection)
+                  .connect(link, self.MD_NAME, safe_mode, aod)
+              else
+                ole_connector.send(md_collection)
+                  .connect(link, self.MD_NAME, safe_mode)
+              end
             end
           end
 
