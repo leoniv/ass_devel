@@ -1927,8 +1927,26 @@ module AssDevel
             ole_connector.newObject('structure')
           end
 
+          def information_register?
+            md.InformationRegisterPeriodicity if\
+              md.ole_respond_to? :InformationRegisterPeriodicity
+          end
+
+          def periodicity
+            returt unless information_register?
+            ole_connector.sTring md.InformationRegisterPeriodicity
+          end
+
+          def period_key?
+            return false if periodicity
+              .to_s =~ %r{(Непериодический|Nonperiodical)}i
+            true
+          end
+
           def record_key_fields
-            [:Period, :Recorder, :LineNumber].select do |k|
+            r = [:Recorder, :LineNumber]
+            r.unshift :Period if period_key?
+            r.select do |k|
               record_key.ole_respond_to? k
             end
           end
