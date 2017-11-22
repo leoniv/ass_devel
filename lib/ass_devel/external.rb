@@ -382,14 +382,19 @@ module AssDevel
           end.run.wait.result.verify!
         end
 
+        def satisfied_by?(requirement, version)
+          Gem::Version::Requirement.new(requirement)
+            .satisfied_by?(Gem::Version.new(version))
+        end
+
         def validate_application
           app_name, app_version = app_name_verion_get
           spec.app_requrements.each do |name, requirement|
-            fail "Invalid application `#{app_name}'" if app_name != name.to_s
-            fail "Invalid application version `#{app_version}'" unless\
-              Gem::Version::Requirement.new(requirement)
-                .satisfied_by?(Gem::Version.new(app_version))
+            return true if\
+              app_name == name.to_s && satisfied_by?(requirement, app_version)
           end
+          fail "Invalid application: `#{app_name} v#{app_version}'"\
+            " Expected applications: #{spec.app_requrements}"
         end
 
         def app_name_verion_get
