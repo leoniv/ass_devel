@@ -752,6 +752,11 @@ module AssDevel
               end
             end
 
+            # Wrapper for +FormGroup+ widget
+            class FormGroup
+              include Abstract::Item
+            end
+
             # Wrapper for +FormField+ widget
             class Formfield
               include Abstract::Item
@@ -762,13 +767,18 @@ module AssDevel
             # Wrapper for +
             # FormTable+ widget
             class Formtable
-              # Extension for +FormField+ widget which inclded into {Formtable}
-              class Field < Formfield
+              # Mixin for Formtable children
+              module Child
                 attr_reader :form_table
                 def initialize(form_wrapper, name, form_table)
                   super form_wrapper, name
                   @form_table = form_table
                 end
+              end
+
+              # Extension for +FormField+ widget which inclded into {Formtable}
+              class Field < Formfield
+                include Child
 
                 def data_source
                   nil
@@ -789,29 +799,75 @@ module AssDevel
                 end
               end
 
+              # Mixin for Formtable and Formtable::FormGroup
+              module FieldsContainer
+                # All +FormField+ type's children
+                def fields
+                  fields_get
+                end
+
+                # All +FormGroup+ type's children
+                def groups
+                  r = []
+                  ole.ChildItems.each do |item|
+                    klass = field_class_get(item)
+                    next unless klass
+                    r << klass.new(form_wrapper, item.Name, self) if\
+                      klass == FormGroup
+                  end
+                  r
+                end
+
+                def fields_get
+#                  fields_get_recursively(ole)
+                  r = []
+                  ole.ChildItems.each do |item|
+                    klass = field_class_get(item)
+                    next unless klass
+                    child = klass.new(form_wrapper, item.Name, self)
+                    r += child.fields if child.is_a? FormGroup
+                    r << child unless child.is_a? FormGroup
+                  end
+                  r
+                end
+                private :fields_get
+
+#                def fields_get_recursively(parent)
+#                  r = []
+#                  parent.ChildItems.each do |item|
+#                    klass = field_class_get(item)
+#                    next unless klass
+#                    field = klass.new(form_wrapper, item.Name, self)
+#                    r += fields_get_recursively(field) if field.is_a? FormGroup
+#                    r << field unless field.is_a? FormGroup
+#                  end
+#                  r
+#                end
+#                private :fields_get_recursively
+
+                def field_class_get(item)
+                  return Field if item
+                    .ole_respond_to?(:WarningOnEditRepresentation)
+                  return FormGroup if item.ole_respond_to?(:EnableContentChange)
+                end
+                private :field_class_get
+              end
+
+              class FormGroup < FormGroup
+                include Child
+                include FieldsContainer
+              end
+
               include Abstract::Item
               include Abstract::ItHas::DataPath
               include Abstract::ItHas::GetAction
-
-              # All +FormField+ type's table fields
-              def fields
-                @fields ||= fields_get
-              end
-
-              def fields_get
-                r = []
-                ole.ChildItems.each do |item|
-                  r << Field.new(form_wrapper, item.Name, self) if\
-                    item.ole_respond_to?(:WarningOnEditRepresentation)
-                end
-                r
-              end
-              private :fields_get
+              include FieldsContainer
 
               # All table fields releted with {#data_path}
               def columns
                 fields.select do |f|
-                  f.data_path =~ %r{#{data_path.gsub('.','\.')}\.\S+}
+                  f.respond_to?(:data_path) &&\
+                    f.data_path =~ %r{#{data_path.gsub('.','\.')}\.\S+}
                 end
               end
 
