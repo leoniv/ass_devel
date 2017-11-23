@@ -903,6 +903,17 @@ module AssDevel
                 data_source.clear if data_source.respond_to? :clear
               end
 
+              # Select row per index or conditions with execute
+              # action :OnActivateRow if it possable
+              # If using &conditions first row will be selected
+              # @return row wrapper instance or nil
+              def activate(index = nil, &conditions)
+                row = select(index, &conditions)
+                exec_action(:OnActivateRow, ole) if\
+                  row && !get_action(:OnActivateRow).empty?
+                row
+              end
+
               # Select row per index or conditions
               # If using &conditions first row will be selected
               # @return row wrapper instance or nil
