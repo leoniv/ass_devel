@@ -682,9 +682,34 @@ module AssDevel
           result
         end
 
+        def ole_version(ole_connector)
+           Gem::Version.new ole_connector.NewObject('SystemInfo').AppVersion
+        end
+
+        # @todo Fuckin 1C. Refactoring require
+        def external_connect(ole_connector)
+          dd = ole_connector.newObject('BinaryData', full_win_path)
+          link = ole_connector.putToTempStorage(dd)
+
+          if ole_version(ole_connector) > Gem::Version.new('8.3.9.2033')
+            aod = ole_connector.newObject 'UnsafeOperationProtectionDescription'
+            aod.UnsafeOperationWarnings = false
+            ole_connector.send(ole_manager)
+              .connect(link, external_name, false, aod)
+          else
+            ole_connector.send(ole_manager)
+              .connect(link, external_name, false, aod)
+          end
+          external_name
+        end
+
+        def external_name
+          app_spec.name
+        end
+
         def external_object(ole_connector)
           ole_connector.send(ole_manager)
-            .Create(full_win_path)
+            .Create(external_connect(ole_connector))
         end
 
         def ole_manager
