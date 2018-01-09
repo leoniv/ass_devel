@@ -1885,7 +1885,7 @@ module AssDevel
           end
 
           def infobase
-            @infobase ||= AssTests::InfoBases::InfoBase
+            @infobase ||= AssMaintainer::InfoBases::TestInfoBase
               .new("clone#{hash}", conn_str, platform_require: platform_require)
           end
 

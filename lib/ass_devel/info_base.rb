@@ -1,6 +1,6 @@
 module AssDevel
-  require 'ass_tests/info_bases/info_base'
-  class TmpInfoBase < AssTests::InfoBases::InfoBase
+  require 'ass_maintainer/info_bases/test_info_base'
+  class TmpInfoBase < AssMaintainer::InfoBases::TestInfoBase
     include Support::TmpPath
 
     # Make new tmp infoabse and yield it in block
@@ -38,7 +38,7 @@ module AssDevel
     end
   end
 
-  class InfoBase < AssTests::InfoBases::InfoBase
+  class InfoBase < AssMaintainer::InfoBases::TestInfoBase
     class DbCfg < AssMaintainer::InfoBase::DbCfg
       include Support::TmpPath
 

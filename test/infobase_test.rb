@@ -87,7 +87,7 @@ module AssDevelTest
     end
 
     it '#initialize for superclass mocked' do
-      AssTests::InfoBases::InfoBase.any_instance.expects(:initialize)
+      AssMaintainer::InfoBases::TestInfoBase.any_instance.expects(:initialize)
         .with(:name, :conn_str, false, **{opt1: 1, template: :db_cfg_src})
         .returns(:new_ib)
       ib = AssDevel::InfoBase
@@ -97,14 +97,14 @@ module AssDevelTest
     end
 
     it '#make mocked' do
-      AssTests::InfoBases::InfoBase.any_instance.expects(:make).returns(:ib)
+      AssMaintainer::InfoBases::TestInfoBase.any_instance.expects(:make).returns(:ib)
       inst.expects(:fail_if_src_not_exists).with(:db_cfg_src)
       inst.make.must_equal :ib
     end
 
     it '#make_infobase! if src_diff? moked' do
       seq = sequence('make')
-      AssTests::InfoBases::InfoBase.any_instance.expects(:make_infobase!)
+      AssMaintainer::InfoBases::TestInfoBase.any_instance.expects(:make_infobase!)
         .in_sequence(seq).returns(:ib)
       inst.expects(:src_diff?).in_sequence(seq).returns true
       inst.expects(:load_cfg_src).in_sequence(seq)
@@ -113,7 +113,7 @@ module AssDevelTest
 
     it '#make_infobase! unless src_diff? moked' do
       seq = sequence('make')
-      AssTests::InfoBases::InfoBase.any_instance.expects(:make_infobase!)
+      AssMaintainer::InfoBases::TestInfoBase.any_instance.expects(:make_infobase!)
         .in_sequence(seq).returns(:ib)
       inst.expects(:src_diff?).in_sequence(seq).returns false
       inst.expects(:load_cfg_src).never

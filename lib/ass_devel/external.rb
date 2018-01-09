@@ -301,7 +301,7 @@ module AssDevel
           def info_base_get
             return AssMaintainer::InfoBase
               .new(ib_name, raw_conn_str) if raw_conn_str
-            AssTests::InfoBases::InfoBase
+            AssMaintainer::InfoBases::TestInfoBase
               .new(ib_name, conn_str, false, **options.merge(template: raw))
           end
           private :info_base_get
