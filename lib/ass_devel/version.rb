@@ -1,3 +1,3 @@
 module AssDevel
-  VERSION = "0.7.0.alpha"
+  VERSION = "1.0.0.alpha"
 end

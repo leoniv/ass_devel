@@ -76,7 +76,7 @@ module AssDevelTest
 
       inst_stub(app_src).expects(:exists?).in_sequence(seq).returns(false)
       inst_stub.expects(:platform_require).in_sequence(seq).returns('42')
-      AssDevel::TmpInfoBase.expects(:make_rm)
+      AssMaintainer::InfoBases::TmpInfoBase.expects(:make_rm)
         .in_sequence(seq).with(platform_require: '42').yields(ib)
       inst_stub.expects(:src_root).in_sequence(seq).returns(:src_root)
       FileUtils.expects(:mkdir_p).in_sequence(seq).with(:src_root)

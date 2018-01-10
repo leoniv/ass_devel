@@ -1,72 +1,6 @@
 require 'test_helper'
 
 module AssDevelTest
-  describe AssDevel::TmpInfoBase do
-    it '.new withot template' do
-      ib = AssDevel::TmpInfoBase.new
-      ib.must_be_instance_of AssDevel::TmpInfoBase
-      ib.is?(:file).must_equal true
-      ib.name.must_equal ib.tmp_ib_name
-      assert_nil ib.template
-      ib.connection_string.file.must_match %r{\A#{Dir.tmpdir}/#{ib.name}}
-      ib.read_only?.must_equal false
-      ib.exists?.must_equal false
-    end
-
-    it '.new template' do
-      ib = AssDevel::TmpInfoBase.new(:template)
-      ib.must_be_instance_of AssDevel::TmpInfoBase
-      ib.is?(:file).must_equal true
-      ib.name.must_equal ib.tmp_ib_name
-      ib.template.must_equal :template
-      ib.connection_string.file.must_match %r{\A#{Dir.tmpdir}/#{ib.name}}
-      ib.read_only?.must_equal false
-      ib.exists?.must_equal false
-    end
-
-    it '#make smoky' do
-      ib = AssDevel::TmpInfoBase.new
-      begin
-        ib.make
-        ib.exists?.must_equal true
-      ensure
-        ib.rm! if ib.exists?
-      end
-    end
-
-    it '#make smoky with tempalte' do
-      ib = AssDevel::TmpInfoBase.new(Fixtures::IB_XML_SRC)
-      begin
-        ib.make
-        ib.exists?.must_equal true
-        ib.template_loaded?.must_equal true
-      ensure
-        ib.rm! if ib.exists?
-      end
-    end
-
-    it '.make_rm fail withot block' do
-      e = proc {
-        AssDevel::TmpInfoBase.make_rm
-      }.must_raise RuntimeError
-      e.message.must_equal 'Block require'
-    end
-
-    it '.make_rm' do
-      seq = sequence('make_rm')
-      ib = mock
-      AssDevel::TmpInfoBase.expects(:new).with(:template, opt1: 1).returns(ib)
-      ib.expects(:make).in_sequence(seq)
-      ib.expects(:touch).in_sequence(seq)
-      ib.expects(:rm!).in_sequence(seq)
-
-      AssDevel::TmpInfoBase.make_rm(:template, opt1: 1) do |ib_|
-        ib_.must_equal ib
-        ib.touch
-      end
-    end
-  end
-
   describe AssDevel::InfoBase do
     def src_stub
       AssDevel::Sources::Abstract::Src
@@ -224,7 +158,7 @@ module AssDevelTest
         src
       end
 
-      cs = AssDevel::TmpInfoBase.new.connection_string
+      cs = AssMaintainer::InfoBases::TmpInfoBase.new.connection_string
       ib = AssDevel::InfoBase
         .new('name', cs, src_mock('shas 1'), src_mock('shas 2'))
       begin
@@ -244,7 +178,7 @@ module AssDevelTest
       infobase.expects(:platform_require).returns(PLATFORM_REQUIRE)
       inst = AssDevel::InfoBase::DbCfg.new(infobase)
       tmp_ib = inst.send(:tmp_ib)
-      tmp_ib.must_be_instance_of AssDevel::TmpInfoBase
+      tmp_ib.must_be_instance_of AssMaintainer::InfoBases::TmpInfoBase
       inst.send(:tmp_ib).must_equal tmp_ib
       tmp_ib.platform_require.must_equal PLATFORM_REQUIRE
       tmp_ib.exists?.must_equal false
@@ -278,7 +212,7 @@ module AssDevelTest
       begin
         xml_path = tmp_path('xml_path')
         fail if File.exists? xml_path
-        ib = AssDevel::TmpInfoBase.new
+        ib = AssMaintainer::InfoBases::TmpInfoBase.new
         ib.make
         inst = AssDevel::InfoBase::DbCfg.new(ib)
         inst.send(:tmp_ib).exists?.must_equal false

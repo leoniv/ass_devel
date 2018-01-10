@@ -60,6 +60,7 @@ module AssDevel
       include Sources::Builded
 
       module Abstract
+        require 'ass_maintainer/info_bases/tmp_info_base'
         # @api private
         class CfgSrc < Sources::Abstract::Src
           include Sources::HaveRootFile
@@ -99,7 +100,8 @@ module AssDevel
 
           def init_src
             fail 'Src exists' if exists?
-            TmpInfoBase.make_rm platform_require: platform_require do |ib|
+            AssMaintainer::InfoBases::TmpInfoBase
+              .make_rm platform_require: platform_require do |ib|
               FileUtils.mkdir_p src_root
               app_src.write_dumper_version(ib.thick.version)
               ib.cfg.dump_xml(src_root)

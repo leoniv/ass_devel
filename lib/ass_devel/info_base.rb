@@ -1,49 +1,14 @@
 module AssDevel
   require 'ass_maintainer/info_bases/test_info_base'
-  class TmpInfoBase < AssMaintainer::InfoBases::TestInfoBase
-    include Support::TmpPath
-
-    # Make new tmp infoabse and yield it in block
-    # after block executing remove tmp infobase
-    def self.make_rm(template = nil, **options, &block)
-      fail 'Block require' unless block_given?
-      ib = new(template, **options)
-      ib.make
-      begin
-        yield ib
-      ensure
-        ib.rm!
-      end
-    end
-
-    def initialize(template = nil, **opts)
-      super *new_ib_args,
-        **opts.merge(template: template)
-    end
-
-    def rm!(*_)
-      super :yes
-    end
-
-    def new_ib_args
-      [tmp_ib_name, self.class.cs_file(file: tmp_ib_path), false]
-    end
-
-    def tmp_ib_name
-      @tmp_ib_name ||= File.basename(tmp_path('ib')).gsub('-','_')
-    end
-
-    def tmp_ib_path
-      @tmp_ib_path ||= File.join(Dir.tmpdir, tmp_ib_name)
-    end
-  end
+  require 'ass_maintainer/info_bases/tmp_info_base'
 
   class InfoBase < AssMaintainer::InfoBases::TestInfoBase
     class DbCfg < AssMaintainer::InfoBase::DbCfg
       include Support::TmpPath
 
       def tmp_ib
-        @tmp_ib ||= TmpInfoBase.new platform_require: infobase.platform_require
+        @tmp_ib ||= AssMaintainer::InfoBases::TmpInfoBase
+          .new platform_require: infobase.platform_require
       end
       private :tmp_ib
 

@@ -31,10 +31,12 @@ module AssDevel
 
       class BinCf < Application::Src
         module Abstract
+          require 'ass_maintainer/info_bases/tmp_info_base'
           class CfgSrc < Application::Src::Abstract::CfgSrc
             def init_src
               fail 'Src exists' if exists?
-              TmpInfoBase.make_rm platform_require: platform_require do |ib|
+              AssMaintainer::InfoBases::TmpInfoBase
+                .make_rm platform_require: platform_require do |ib|
                 dump_ ib
               end
               repo_add_to_index
