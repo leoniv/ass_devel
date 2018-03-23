@@ -1294,11 +1294,21 @@ module AssDevel
             alias_method :new_folder, :new_group
             alias_method :make_folder, :make_group
 
+            def __folding__?
+              def folding_group?
+                return true unless object_metadata.ole_respond_to? :HierarchyType
+                sTring(object_metadata.HierarchyType) =~\
+                %r{(ИерархияГруппИЭлементов|HierarchyFoldersAndItems)}
+              end
+              object_metadata.Hierarchical && folding_group?
+            end
+            private :__folding__?
+
             def find_objects(is_folder = false, **options, &block)
               qtext = "Select T.ref as ref from\n"\
                 " Catalog.#{self.MD_NAME} as T\n where \n"
 
-              options[:IsFolder] = is_folder if object_metadata.Hierarchical
+              options[:IsFolder] = is_folder if __folding__?
 
               qtext << qtext_condition_(**options)
 
