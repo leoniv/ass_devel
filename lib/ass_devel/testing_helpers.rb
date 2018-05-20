@@ -713,7 +713,7 @@ module AssDevel
                   # Wrapper for Ole +DataPath+ method
                   # @return [String]
                   def data_path
-                    srv_prop_get :DataPath
+                    @data_path ||= srv_prop_get :DataPath
                   end
 
                   # Return wrapper for form attribute wich is the data source
