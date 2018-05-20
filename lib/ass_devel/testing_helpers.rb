@@ -803,11 +803,33 @@ module AssDevel
               module FieldsContainer
                 # All +FormField+ type's children
                 def fields
-                  fields_get
+                  @fields = fields_get if reset_fields?
                 end
+
+                def reset_fields?
+                  @fields.nil? || child_count_change?
+                end
+                private :reset_fields?
+
+                def child_count_change?
+                  @child_count ||= ole.ChildItems.Count
+                  old = @child_count
+                  @child_count = ole.ChildItems.Count
+                  old != @child_count
+                end
+                private :child_count_change?
 
                 # All +FormGroup+ type's children
                 def groups
+                  @groups = groups_get if reset_groups?
+                end
+
+                def reset_groups?
+                  @groups.nil? || child_count_change?
+                end
+                private :reset_groups?
+
+                def groups_get
                   r = []
                   ole.ChildItems.each do |item|
                     klass = field_class_get(item)
@@ -817,6 +839,7 @@ module AssDevel
                   end
                   r
                 end
+                private :groups_get
 
                 def fields_get
 #                  fields_get_recursively(ole)
@@ -831,19 +854,6 @@ module AssDevel
                   r
                 end
                 private :fields_get
-
-#                def fields_get_recursively(parent)
-#                  r = []
-#                  parent.ChildItems.each do |item|
-#                    klass = field_class_get(item)
-#                    next unless klass
-#                    field = klass.new(form_wrapper, item.Name, self)
-#                    r += fields_get_recursively(field) if field.is_a? FormGroup
-#                    r << field unless field.is_a? FormGroup
-#                  end
-#                  r
-#                end
-#                private :fields_get_recursively
 
                 def field_class_get(item)
                   return Field if item
