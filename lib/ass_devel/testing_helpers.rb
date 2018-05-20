@@ -996,7 +996,7 @@ module AssDevel
               end
 
               def command
-                form_wrapper.Commands.Find(commandName)
+                @command ||= form_wrapper.Commands.Find(commandName)
               end
             end
           end
