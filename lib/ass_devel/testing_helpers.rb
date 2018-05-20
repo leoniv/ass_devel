@@ -804,6 +804,7 @@ module AssDevel
                 # All +FormField+ type's children
                 def fields
                   @fields = fields_get if reset_fields?
+                  @fields
                 end
 
                 def reset_fields?
@@ -822,6 +823,7 @@ module AssDevel
                 # All +FormGroup+ type's children
                 def groups
                   @groups = groups_get if reset_groups?
+                  @groups
                 end
 
                 def reset_groups?
